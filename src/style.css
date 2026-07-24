@@ -1,0 +1,102 @@
+/* Modern Dark Glassmorphic Theme for Freelancing.SB JavaFX Desktop */
+
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: #0F172A;
+}
+
+/* ScrollBar Styling */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: #1E293B;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #475569;
+    -fx-background-radius: 6;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #6366F1;
+}
+
+.scroll-pane {
+    -fx-background: #0F172A;
+    -fx-background-color: #0F172A;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: #0F172A;
+}
+
+/* Chart Styling */
+.chart {
+    -fx-padding: 10px;
+    -fx-background-color: #1E293B;
+    -fx-background-radius: 10;
+    -fx-border-color: #334155;
+    -fx-border-radius: 10;
+}
+
+.chart-title {
+    -fx-text-fill: #F8FAFC;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94A3B8;
+}
+
+.axis {
+    -fx-tick-label-fill: #94A3B8;
+    -fx-font-size: 11px;
+}
+
+.axis-label {
+    -fx-text-fill: #CBD5E1;
+}
+
+/* Dialog & Alert Styling */
+.dialog-pane {
+    -fx-background-color: #1E293B;
+}
+
+.dialog-pane > .content.label {
+    -fx-text-fill: #F8FAFC;
+}
+
+.dialog-pane:header .header-panel {
+    -fx-background-color: #0F172A;
+}
+
+.dialog-pane:header .header-panel .label {
+    -fx-text-fill: #6366F1;
+    -fx-font-weight: bold;
+}
+
+/* TabPane Styling */
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #0F172A;
+}
+
+.tab {
+    -fx-background-color: #1E293B;
+    -fx-text-fill: #94A3B8;
+    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 6 12 6 12;
+}
+
+.tab:selected {
+    -fx-background-color: #6366F1;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #94A3B8;
+}
