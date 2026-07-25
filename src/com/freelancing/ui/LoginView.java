@@ -31,11 +31,11 @@ public class LoginView {
         container.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_DARK + ";");
 
         // Header Logo & Title
-        Label logo = new Label("⚡ Freelancing.SB");
+        Label logo = new Label("⚡ SkillBridge");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 28));
         logo.setTextFill(Color.web(UIComponents.COLOR_PRIMARY));
 
-        Label subtitle = new Label("Next-Generation Freelance Platform for Desktop");
+        Label subtitle = new Label("Next-Generation Freelancing & Skill Exchange Platform");
         subtitle.setFont(Font.font("Segoe UI", 14));
         subtitle.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
 

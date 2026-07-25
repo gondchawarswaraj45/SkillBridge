@@ -14,7 +14,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Freelancing.SB - Desktop Platform");
+        primaryStage.setTitle("SkillBridge - Freelancing Platform");
 
         // Initialize Database Manager and Seed Records
         DatabaseManager.getInstance();

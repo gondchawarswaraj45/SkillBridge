@@ -53,7 +53,7 @@ public class ClientMainView {
                         "-fx-border-color: " + UIComponents.COLOR_BORDER + ";" +
                         "-fx-border-width: 0 0 1 0;");
 
-        Label logo = new Label("⚡ Freelancing.SB  |  Client Portal");
+        Label logo = new Label("⚡ SkillBridge  |  Client Portal");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         logo.setTextFill(Color.web(UIComponents.COLOR_PRIMARY));
 
@@ -86,6 +86,7 @@ public class ClientMainView {
                         "-fx-border-width: 0 1 0 0;");
 
         Button btnNavDash = createNavButton("📊 Client Dashboard", true);
+        Button btnNavFeed = createNavButton("📰 Community Feed", false);
         Button btnNavPost = createNavButton("➕ Post New Project", false);
         Button btnNavProps = createNavButton("📩 Proposal Review", false);
         Button btnNavSearch = createNavButton("🔍 Find Freelancers & AI", false);
@@ -93,12 +94,13 @@ public class ClientMainView {
         Button btnNavChat = createNavButton("💬 Chat & Messaging", false);
         Button btnNavProfile = createNavButton("🏢 Company Profile", false);
 
-        Button[] navBtns = {btnNavDash, btnNavPost, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile};
+        Button[] navBtns = {btnNavDash, btnNavFeed, btnNavPost, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile};
 
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(20));
 
         btnNavDash.setOnAction(e -> { selectNav(btnNavDash, navBtns); showDashboard(); });
+        btnNavFeed.setOnAction(e -> { selectNav(btnNavFeed, navBtns); showFeed(); });
         btnNavPost.setOnAction(e -> { selectNav(btnNavPost, navBtns); showPostProject(); });
         btnNavProps.setOnAction(e -> { selectNav(btnNavProps, navBtns); showProposals(); });
         btnNavSearch.setOnAction(e -> { selectNav(btnNavSearch, navBtns); showFreelancerSearch(); });
@@ -106,7 +108,7 @@ public class ClientMainView {
         btnNavChat.setOnAction(e -> { selectNav(btnNavChat, navBtns); showChat(); });
         btnNavProfile.setOnAction(e -> { selectNav(btnNavProfile, navBtns); showCompanyProfile(); });
 
-        sidebar.getChildren().addAll(btnNavDash, btnNavPost, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile);
+        sidebar.getChildren().addAll(btnNavDash, btnNavFeed, btnNavPost, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile);
         root.setLeft(sidebar);
         root.setCenter(contentArea);
 
@@ -193,6 +195,208 @@ public class ClientMainView {
 
         box.getChildren().addAll(title, statGrid, chartCard, projCard);
         contentArea.getChildren().setAll(new ScrollPane(box));
+    }
+
+    // Community Feed
+    private void showFeed() {
+        VBox box = new VBox(15);
+        Label title = UIComponents.createTitle("📰 Community Feed");
+
+        // Create Post Card
+        VBox createCard = UIComponents.createCard();
+        createCard.getChildren().add(UIComponents.createHeader("✍️ Create a New Post"));
+
+        TextField tfPostTitle = UIComponents.createTextField("Post title...");
+        TextArea taPostContent = UIComponents.createTextArea("Share your thoughts, post hiring needs, or start a discussion...");
+        taPostContent.setPrefRowCount(4);
+
+        ComboBox<String> cbCategory = new ComboBox<>();
+        cbCategory.getItems().addAll("Showcase", "Hiring", "Discussion", "Feedback");
+        cbCategory.getSelectionModel().select(1);
+        cbCategory.setMaxWidth(Double.MAX_VALUE);
+        cbCategory.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-text-fill: white;");
+
+        Button btnPost = UIComponents.createPrimaryButton("🚀 Publish Post");
+        btnPost.setOnAction(e -> {
+            String pTitle = tfPostTitle.getText().trim();
+            String pContent = taPostContent.getText().trim();
+            if (pTitle.isEmpty() || pContent.isEmpty()) {
+                UIComponents.showAlert(Alert.AlertType.WARNING, "Post", "Missing Fields", "Please enter both a title and content for your post.");
+                return;
+            }
+            String postId = "feed_" + System.currentTimeMillis();
+            String catStr = cbCategory.getValue();
+            FeedPost.PostCategory cat = FeedPost.PostCategory.valueOf(catStr.toUpperCase());
+            String ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(new java.util.Date());
+
+            FeedPost post = new FeedPost(postId, currentUser.getId(), currentUser.getUsername(), "CLIENT",
+                    pTitle, pContent, cat, FeedPost.PostStatus.ACTIVE, ts);
+            db.getFeedPosts().put(postId, post);
+            db.logActivity("Client " + currentUser.getUsername() + " published feed post: " + pTitle);
+            db.saveData();
+
+            tfPostTitle.clear();
+            taPostContent.clear();
+            UIComponents.showAlert(Alert.AlertType.INFORMATION, "Post Published", "Success", "Your post is now live on the community feed!");
+            showFeed();
+        });
+
+        createCard.getChildren().addAll(
+                new Label("Category:"), cbCategory,
+                new Label("Title:"), tfPostTitle,
+                new Label("Content:"), taPostContent,
+                btnPost
+        );
+
+        // Feed Timeline
+        VBox feedTimeline = new VBox(12);
+        java.util.List<FeedPost> posts = db.getFeedPosts().values().stream()
+                .filter(p -> p.getStatus() == FeedPost.PostStatus.ACTIVE)
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .collect(Collectors.toList());
+
+        if (posts.isEmpty()) {
+            VBox emptyCard = UIComponents.createCard();
+            Label emptyLbl = new Label("No posts yet. Be the first to share something with the community!");
+            emptyLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+            emptyCard.getChildren().add(emptyLbl);
+            feedTimeline.getChildren().add(emptyCard);
+        } else {
+            for (FeedPost post : posts) {
+                feedTimeline.getChildren().add(buildFeedPostCard(post));
+            }
+        }
+
+        box.getChildren().addAll(title, createCard, UIComponents.createHeader("📡 Latest Posts"), feedTimeline);
+        contentArea.getChildren().setAll(new ScrollPane(box));
+    }
+
+    private VBox buildFeedPostCard(FeedPost post) {
+        VBox card = UIComponents.createCard();
+
+        // Author header
+        HBox authorRow = new HBox(10);
+        authorRow.setAlignment(Pos.CENTER_LEFT);
+        Label authorLbl = new Label(("FREELANCER".equals(post.getAuthorRole()) ? "👤" : "🏢") + " " + post.getAuthorName());
+        authorLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        authorLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+
+        Label roleBadge = UIComponents.createBadge(post.getAuthorRole(), UIComponents.COLOR_PRIMARY, "white");
+        Label catBadge = UIComponents.createBadge(post.getCategory().toString(), UIComponents.COLOR_PURPLE, "white");
+
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+
+        Label timeLbl = new Label("🕒 " + post.getTimestamp());
+        timeLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+        timeLbl.setFont(Font.font("Segoe UI", 11));
+
+        authorRow.getChildren().addAll(authorLbl, roleBadge, catBadge, sp, timeLbl);
+
+        // Post content
+        Label postTitle = new Label(post.getTitle());
+        postTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
+        postTitle.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+        postTitle.setWrapText(true);
+
+        Label postContent = new Label(post.getContent());
+        postContent.setWrapText(true);
+        postContent.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+        postContent.setFont(Font.font("Segoe UI", 13));
+
+        // Action buttons
+        HBox actionBar = new HBox(12);
+        actionBar.setAlignment(Pos.CENTER_LEFT);
+
+        boolean liked = post.getLikedByUserIds().contains(currentUser.getId());
+        Button btnLike = liked ? UIComponents.createPrimaryButton("👍 Liked (" + post.getLikes() + ")")
+                               : UIComponents.createSecondaryButton("👍 Like (" + post.getLikes() + ")");
+        btnLike.setOnAction(e -> {
+            post.toggleLike(currentUser.getId());
+            db.getFeedPosts().put(post.getId(), post);
+            db.saveData();
+            showFeed();
+        });
+
+        Button btnComment = UIComponents.createSecondaryButton("💬 Comments (" + post.getComments().size() + ")");
+
+        Button btnFeedback = UIComponents.createSuccessButton("⭐ Give Feedback");
+        btnFeedback.setOnAction(e -> {
+            if (post.getAuthorId().equals(currentUser.getId())) {
+                UIComponents.showAlert(Alert.AlertType.WARNING, "Feedback", "Not Allowed", "You cannot give feedback on your own post.");
+                return;
+            }
+            TextInputDialog feedbackDialog = new TextInputDialog();
+            feedbackDialog.setTitle("Give Feedback");
+            feedbackDialog.setHeaderText("Write feedback for " + post.getAuthorName());
+            feedbackDialog.setContentText("Your feedback:");
+            feedbackDialog.showAndWait().ifPresent(feedback -> {
+                if (!feedback.trim().isEmpty()) {
+                    String rId = "rating_" + System.currentTimeMillis();
+                    String ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(new java.util.Date());
+                    Rating rating = new Rating(rId, "", currentUser.getId(), currentUser.getUsername(), post.getAuthorId(), 5.0, feedback.trim(), ts);
+                    db.getRatings().put(rId, rating);
+                    db.logActivity(currentUser.getUsername() + " gave feedback to " + post.getAuthorName());
+                    db.saveData();
+                    UIComponents.showAlert(Alert.AlertType.INFORMATION, "Feedback Sent", "Thank You", "Your feedback has been sent to " + post.getAuthorName() + "!");
+                }
+            });
+        });
+
+        actionBar.getChildren().addAll(btnLike, btnComment, btnFeedback);
+
+        // Comments section
+        VBox commentsBox = new VBox(6);
+        commentsBox.setPadding(new Insets(8, 0, 0, 0));
+
+        if (!post.getComments().isEmpty()) {
+            Label cmtHeader = new Label("💬 Comments:");
+            cmtHeader.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+            cmtHeader.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+            commentsBox.getChildren().add(cmtHeader);
+
+            for (FeedPost.FeedComment cmt : post.getComments()) {
+                HBox cmtRow = new HBox(8);
+                cmtRow.setPadding(new Insets(6, 10, 6, 10));
+                cmtRow.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-background-radius: 6;");
+
+                Label cmtAuthor = new Label(cmt.getAuthorName() + ":");
+                cmtAuthor.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+                cmtAuthor.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+
+                Label cmtText = new Label(cmt.getContent());
+                cmtText.setWrapText(true);
+                cmtText.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                cmtText.setFont(Font.font("Segoe UI", 12));
+
+                cmtRow.getChildren().addAll(cmtAuthor, cmtText);
+                commentsBox.getChildren().add(cmtRow);
+            }
+        }
+
+        // Add comment input
+        HBox addCmtBar = new HBox(8);
+        addCmtBar.setAlignment(Pos.CENTER_LEFT);
+        TextField tfComment = UIComponents.createTextField("Write a comment...");
+        HBox.setHgrow(tfComment, Priority.ALWAYS);
+        Button btnAddCmt = UIComponents.createPrimaryButton("Post");
+        btnAddCmt.setOnAction(e -> {
+            String cmtText = tfComment.getText().trim();
+            if (!cmtText.isEmpty()) {
+                String cmtId = "cmt_" + System.currentTimeMillis();
+                String ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(new java.util.Date());
+                post.addComment(new FeedPost.FeedComment(cmtId, currentUser.getId(), currentUser.getUsername(), cmtText, ts));
+                db.getFeedPosts().put(post.getId(), post);
+                db.saveData();
+                showFeed();
+            }
+        });
+        tfComment.setOnAction(e -> btnAddCmt.fire());
+        addCmtBar.getChildren().addAll(tfComment, btnAddCmt);
+        commentsBox.getChildren().add(addCmtBar);
+
+        card.getChildren().addAll(authorRow, postTitle, postContent, actionBar, commentsBox);
+        return card;
     }
 
     private int getPostedProjectCount() {

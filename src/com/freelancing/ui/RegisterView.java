@@ -31,7 +31,7 @@ public class RegisterView {
         container.setPadding(new Insets(30));
         container.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_DARK + ";");
 
-        Label logo = new Label("⚡ Join Freelancing.SB");
+        Label logo = new Label("⚡ Join SkillBridge");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
         logo.setTextFill(Color.web(UIComponents.COLOR_PRIMARY));
 

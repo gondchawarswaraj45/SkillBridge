@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AdminMainView {
     private final Stage stage;
@@ -50,7 +51,7 @@ public class AdminMainView {
                         "-fx-border-color: " + UIComponents.COLOR_BORDER + ";" +
                         "-fx-border-width: 0 0 1 0;");
 
-        Label logo = new Label("⚡ Freelancing.SB  |  SYSTEM ADMIN PORTAL");
+        Label logo = new Label("⚡ SkillBridge  |  SYSTEM ADMIN PORTAL");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         logo.setTextFill(Color.web(UIComponents.COLOR_DANGER));
 
@@ -93,6 +94,8 @@ public class AdminMainView {
 
         Button[] navBtns = {btnNavDash, btnNavUsers, btnNavProjects, btnNavDisputes, btnNavAiMon, btnNavReports, btnNavAnnounce, btnNavBackup};
 
+        Button btnNavFeedMod = createNavButton("📰 Feed Moderation", false);
+
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(20));
 
@@ -104,8 +107,9 @@ public class AdminMainView {
         btnNavReports.setOnAction(e -> { selectNav(btnNavReports, navBtns); showReports(); });
         btnNavAnnounce.setOnAction(e -> { selectNav(btnNavAnnounce, navBtns); showAnnouncements(); });
         btnNavBackup.setOnAction(e -> { selectNav(btnNavBackup, navBtns); showBackupAndLogs(); });
+        btnNavFeedMod.setOnAction(e -> { selectNav(btnNavFeedMod, navBtns); showFeedModeration(); });
 
-        sidebar.getChildren().addAll(btnNavDash, btnNavUsers, btnNavProjects, btnNavDisputes, btnNavAiMon, btnNavReports, btnNavAnnounce, btnNavBackup);
+        sidebar.getChildren().addAll(btnNavDash, btnNavUsers, btnNavProjects, btnNavDisputes, btnNavAiMon, btnNavReports, btnNavAnnounce, btnNavBackup, btnNavFeedMod);
         root.setLeft(sidebar);
         root.setCenter(contentArea);
 
@@ -420,5 +424,144 @@ public class AdminMainView {
 
         box.getChildren().addAll(title, card);
         contentArea.getChildren().setAll(box);
+    }
+
+    // 9. Feed Moderation Panel
+    private void showFeedModeration() {
+        VBox box = new VBox(15);
+        Label title = UIComponents.createTitle("📰 Feed Moderation & Content Management");
+
+        // Stats
+        long activeCount = db.getFeedPosts().values().stream().filter(p -> p.getStatus() == FeedPost.PostStatus.ACTIVE).count();
+        long flaggedCount = db.getFeedPosts().values().stream().filter(p -> p.getStatus() == FeedPost.PostStatus.FLAGGED).count();
+        long removedCount = db.getFeedPosts().values().stream().filter(p -> p.getStatus() == FeedPost.PostStatus.REMOVED).count();
+
+        HBox statGrid = new HBox(15);
+        VBox cardActive = UIComponents.createStatCard("✅", "Active Posts", String.valueOf(activeCount), UIComponents.COLOR_SUCCESS);
+        VBox cardFlagged = UIComponents.createStatCard("⚠️", "Flagged Posts", String.valueOf(flaggedCount), UIComponents.COLOR_AMBER);
+        VBox cardRemoved = UIComponents.createStatCard("❌", "Removed Posts", String.valueOf(removedCount), UIComponents.COLOR_DANGER);
+        VBox cardTotal = UIComponents.createStatCard("📊", "Total Posts", String.valueOf(db.getFeedPosts().size()), UIComponents.COLOR_PRIMARY);
+        statGrid.getChildren().addAll(cardActive, cardFlagged, cardRemoved, cardTotal);
+
+        // All posts list
+        VBox postList = new VBox(10);
+        List<FeedPost> allPosts = db.getFeedPosts().values().stream()
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .collect(Collectors.toList());
+
+        if (allPosts.isEmpty()) {
+            VBox emptyCard = UIComponents.createCard();
+            Label emptyLbl = new Label("No feed posts have been created on the platform yet.");
+            emptyLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+            emptyCard.getChildren().add(emptyLbl);
+            postList.getChildren().add(emptyCard);
+        } else {
+            for (FeedPost post : allPosts) {
+                HBox row = new HBox(12);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setPadding(new Insets(12));
+                row.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_CARD + "; -fx-border-color: " + UIComponents.COLOR_BORDER + "; -fx-border-radius: 8; -fx-background-radius: 8;");
+
+                VBox info = new VBox(4);
+                Label postHeader = new Label(("FREELANCER".equals(post.getAuthorRole()) ? "👤" : "🏢") + " " + post.getAuthorName() + " (" + post.getAuthorRole() + ")");
+                postHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+                postHeader.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+
+                Label postTitle2 = new Label("📝 " + post.getTitle());
+                postTitle2.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+                postTitle2.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+                postTitle2.setWrapText(true);
+
+                String contentPreview = post.getContent().length() > 120 ? post.getContent().substring(0, 120) + "..." : post.getContent();
+                Label postDesc = new Label(contentPreview);
+                postDesc.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                postDesc.setWrapText(true);
+                postDesc.setFont(Font.font("Segoe UI", 12));
+
+                Label metaLbl = new Label("📅 " + post.getTimestamp() + " | 👍 " + post.getLikes() + " likes | 💬 " + post.getComments().size() + " comments | 🏷️ " + post.getCategory());
+                metaLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                metaLbl.setFont(Font.font("Segoe UI", 11));
+
+                info.getChildren().addAll(postHeader, postTitle2, postDesc, metaLbl);
+
+                Region sp = new Region();
+                HBox.setHgrow(sp, Priority.ALWAYS);
+
+                // Status badge
+                String statusColor;
+                switch (post.getStatus()) {
+                    case ACTIVE: statusColor = UIComponents.COLOR_SUCCESS; break;
+                    case FLAGGED: statusColor = UIComponents.COLOR_AMBER; break;
+                    case REMOVED: statusColor = UIComponents.COLOR_DANGER; break;
+                    default: statusColor = UIComponents.COLOR_PRIMARY;
+                }
+                Label statusBadge = UIComponents.createBadge(post.getStatus().toString(), statusColor, "white");
+
+                // Action buttons
+                VBox actionBtns = new VBox(4);
+                actionBtns.setAlignment(Pos.CENTER);
+
+                if (post.getStatus() == FeedPost.PostStatus.ACTIVE) {
+                    Button btnFlag = UIComponents.createSecondaryButton("⚠️ Flag");
+                    btnFlag.setOnAction(e -> {
+                        post.setStatus(FeedPost.PostStatus.FLAGGED);
+                        db.getFeedPosts().put(post.getId(), post);
+                        db.logActivity("Admin flagged feed post: " + post.getTitle() + " by " + post.getAuthorName());
+                        db.saveData();
+                        showFeedModeration();
+                    });
+                    Button btnRemove = UIComponents.createDangerButton("❌ Remove");
+                    btnRemove.setOnAction(e -> {
+                        post.setStatus(FeedPost.PostStatus.REMOVED);
+                        db.getFeedPosts().put(post.getId(), post);
+                        db.logActivity("Admin removed feed post: " + post.getTitle() + " by " + post.getAuthorName());
+                        db.saveData();
+                        showFeedModeration();
+                    });
+                    actionBtns.getChildren().addAll(btnFlag, btnRemove);
+                } else if (post.getStatus() == FeedPost.PostStatus.FLAGGED) {
+                    Button btnRestore = UIComponents.createSuccessButton("✅ Restore");
+                    btnRestore.setOnAction(e -> {
+                        post.setStatus(FeedPost.PostStatus.ACTIVE);
+                        db.getFeedPosts().put(post.getId(), post);
+                        db.logActivity("Admin restored feed post: " + post.getTitle() + " by " + post.getAuthorName());
+                        db.saveData();
+                        showFeedModeration();
+                    });
+                    Button btnRemove = UIComponents.createDangerButton("❌ Remove");
+                    btnRemove.setOnAction(e -> {
+                        post.setStatus(FeedPost.PostStatus.REMOVED);
+                        db.getFeedPosts().put(post.getId(), post);
+                        db.logActivity("Admin removed flagged post: " + post.getTitle() + " by " + post.getAuthorName());
+                        db.saveData();
+                        showFeedModeration();
+                    });
+                    actionBtns.getChildren().addAll(btnRestore, btnRemove);
+                } else {
+                    Button btnRestore = UIComponents.createSuccessButton("✅ Restore");
+                    btnRestore.setOnAction(e -> {
+                        post.setStatus(FeedPost.PostStatus.ACTIVE);
+                        db.getFeedPosts().put(post.getId(), post);
+                        db.logActivity("Admin restored removed post: " + post.getTitle() + " by " + post.getAuthorName());
+                        db.saveData();
+                        showFeedModeration();
+                    });
+                    Button btnDelete = UIComponents.createDangerButton("🗑️ Delete");
+                    btnDelete.setOnAction(e -> {
+                        db.getFeedPosts().remove(post.getId());
+                        db.logActivity("Admin permanently deleted post: " + post.getTitle() + " by " + post.getAuthorName());
+                        db.saveData();
+                        showFeedModeration();
+                    });
+                    actionBtns.getChildren().addAll(btnRestore, btnDelete);
+                }
+
+                row.getChildren().addAll(info, sp, statusBadge, actionBtns);
+                postList.getChildren().add(row);
+            }
+        }
+
+        box.getChildren().addAll(title, statGrid, postList);
+        contentArea.getChildren().setAll(new ScrollPane(box));
     }
 }

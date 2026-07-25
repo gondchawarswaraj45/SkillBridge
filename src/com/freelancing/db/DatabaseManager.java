@@ -21,6 +21,7 @@ public class DatabaseManager implements Serializable {
     private Map<String, SupportTicket> supportTickets = new ConcurrentHashMap<>();
     private Map<String, Notification> notifications = new ConcurrentHashMap<>();
     private Map<String, Rating> ratings = new ConcurrentHashMap<>();
+    private Map<String, FeedPost> feedPosts = new ConcurrentHashMap<>();
     private List<String> activityLogs = Collections.synchronizedList(new ArrayList<>());
 
     private DatabaseManager() {}
@@ -152,6 +153,32 @@ public class DatabaseManager implements Serializable {
         SupportTicket st1 = new SupportTicket("tkt_01", free1.getId(), "alex_dev", "OTP Verification Delay", "Received SMS OTP after 2 minutes on initial registration.", SupportTicket.Status.CLOSED, "2026-02-01");
         st1.setAdminReply("Resolved: Gateway latency cleared.");
         supportTickets.put(st1.getId(), st1);
+
+        // 10. Sample Feed Posts
+        FeedPost fp1Post = new FeedPost("feed_01", free1.getId(), "alex_dev", "FREELANCER",
+                "Just completed a full-stack e-commerce platform!",
+                "Excited to share my latest project — a complete e-commerce solution built with Java Spring Boot backend and React frontend. Features include real-time inventory management, Razorpay payment integration, and an AI-powered product recommendation engine. Looking for feedback from the community!",
+                FeedPost.PostCategory.SHOWCASE, FeedPost.PostStatus.ACTIVE, "2026-02-15 10:30");
+        fp1Post.setLikes(12);
+        fp1Post.addComment(new FeedPost.FeedComment("cmt_01", client1.getId(), "techcorp", "Impressive work Alex! We might have a similar project coming up.", "2026-02-15 11:00"));
+        fp1Post.addComment(new FeedPost.FeedComment("cmt_02", free2.getId(), "sarah_ui", "Love the clean UI design! Would love to collaborate on the frontend sometime.", "2026-02-15 11:45"));
+        feedPosts.put(fp1Post.getId(), fp1Post);
+
+        FeedPost fp2Post = new FeedPost("feed_02", client1.getId(), "techcorp", "CLIENT",
+                "Hiring: Senior Mobile Developer for Healthcare App",
+                "TechCorp Global is looking for an experienced mobile developer to build a HIPAA-compliant telemedicine application. Must have experience with Flutter/React Native, real-time video calls, and secure data handling. Competitive budget and long-term engagement possible. Apply through our posted project or DM!",
+                FeedPost.PostCategory.HIRING, FeedPost.PostStatus.ACTIVE, "2026-02-18 09:15");
+        fp2Post.setLikes(8);
+        fp2Post.addComment(new FeedPost.FeedComment("cmt_03", free1.getId(), "alex_dev", "Very interested! I have healthcare app experience. Sending a proposal shortly.", "2026-02-18 10:00"));
+        feedPosts.put(fp2Post.getId(), fp2Post);
+
+        FeedPost fp3Post = new FeedPost("feed_03", free2.getId(), "sarah_ui", "FREELANCER",
+                "Tips for creating stunning dark-mode dashboards",
+                "After designing 15+ dashboard interfaces, here are my top 5 tips for dark-mode UI:\n1. Use contrast ratios of at least 4.5:1 for text\n2. Avoid pure black (#000) — use dark grays like #1E293B\n3. Use subtle gradients for depth\n4. Color-code data visualization elements consistently\n5. Test with real data, not lorem ipsum!\n\nWhat are your best practices? Share below!",
+                FeedPost.PostCategory.DISCUSSION, FeedPost.PostStatus.ACTIVE, "2026-02-20 14:00");
+        fp3Post.setLikes(23);
+        fp3Post.addComment(new FeedPost.FeedComment("cmt_04", client2.getId(), "designstudio", "Great tips Sarah! Tip #2 is so important. We follow the same approach at Apex.", "2026-02-20 15:30"));
+        feedPosts.put(fp3Post.getId(), fp3Post);
     }
 
     // Getters for Collections
@@ -166,6 +193,7 @@ public class DatabaseManager implements Serializable {
     public Map<String, SupportTicket> getSupportTickets() { return supportTickets; }
     public Map<String, Notification> getNotifications() { return notifications; }
     public Map<String, Rating> getRatings() { return ratings; }
+    public Map<String, FeedPost> getFeedPosts() { return feedPosts; }
     public List<String> getActivityLogs() { return activityLogs; }
 
     public void logActivity(String entry) {
