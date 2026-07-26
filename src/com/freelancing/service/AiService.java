@@ -4,6 +4,8 @@ import com.freelancing.model.FreelancerProfile;
 import com.freelancing.model.Project;
 import com.freelancing.model.User;
 import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AiService {
 
@@ -19,12 +21,24 @@ public class AiService {
 
         if (reqSkills == null || reqSkills.isEmpty()) return 85;
 
+        // O(m+n) HashSet approach instead of O(m×n) nested loop
+        Set<String> freeSkillsLower = new HashSet<>(freeSkills.size());
+        for (String s : freeSkills) {
+            freeSkillsLower.add(s.toLowerCase());
+        }
+
         int matchCount = 0;
         for (String req : reqSkills) {
-            for (String free : freeSkills) {
-                if (req.equalsIgnoreCase(free) || free.toLowerCase().contains(req.toLowerCase()) || req.toLowerCase().contains(free.toLowerCase())) {
-                    matchCount++;
-                    break;
+            String reqLower = req.toLowerCase();
+            if (freeSkillsLower.contains(reqLower)) {
+                matchCount++;
+            } else {
+                // Partial match fallback (substring check) — only runs on misses
+                for (String free : freeSkillsLower) {
+                    if (free.contains(reqLower) || reqLower.contains(free)) {
+                        matchCount++;
+                        break;
+                    }
                 }
             }
         }

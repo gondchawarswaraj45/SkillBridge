@@ -2,7 +2,6 @@ package com.freelancing.service;
 
 import com.freelancing.db.DatabaseManager;
 import com.freelancing.model.Notification;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,17 +13,12 @@ public class NotificationService {
         String ts = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(new java.util.Date());
         Notification notif = new Notification(notifId, userId, title, message, false, ts);
         db.getNotifications().put(notifId, notif);
+        db.invalidateCaches(); // Invalidate notification cache
         db.saveData();
     }
 
+    /** Uses indexed lookup O(1) from DatabaseManager instead of O(n) full scan */
     public List<Notification> getUserNotifications(String userId) {
-        List<Notification> result = new ArrayList<>();
-        for (Notification n : db.getNotifications().values()) {
-            if (n.getUserId().equals(userId)) {
-                result.add(n);
-            }
-        }
-        result.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
-        return result;
+        return db.getNotificationsByUser(userId);
     }
 }

@@ -88,13 +88,14 @@ public class ClientMainView {
         Button btnNavDash = createNavButton("📊 Client Dashboard", true);
         Button btnNavFeed = createNavButton("📰 Community Feed", false);
         Button btnNavPost = createNavButton("➕ Post New Project", false);
+        Button btnNavBids = createNavButton("📋 Job Bids & Assign", false);
         Button btnNavProps = createNavButton("📩 Proposal Review", false);
         Button btnNavSearch = createNavButton("🔍 Find Freelancers & AI", false);
         Button btnNavProgress = createNavButton("💳 Milestones & Razorpay", false);
         Button btnNavChat = createNavButton("💬 Chat & Messaging", false);
         Button btnNavProfile = createNavButton("🏢 Company Profile", false);
 
-        Button[] navBtns = {btnNavDash, btnNavFeed, btnNavPost, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile};
+        Button[] navBtns = {btnNavDash, btnNavFeed, btnNavPost, btnNavBids, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile};
 
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(20));
@@ -102,13 +103,14 @@ public class ClientMainView {
         btnNavDash.setOnAction(e -> { selectNav(btnNavDash, navBtns); showDashboard(); });
         btnNavFeed.setOnAction(e -> { selectNav(btnNavFeed, navBtns); showFeed(); });
         btnNavPost.setOnAction(e -> { selectNav(btnNavPost, navBtns); showPostProject(); });
+        btnNavBids.setOnAction(e -> { selectNav(btnNavBids, navBtns); showJobBidsAndAssign(); });
         btnNavProps.setOnAction(e -> { selectNav(btnNavProps, navBtns); showProposals(); });
         btnNavSearch.setOnAction(e -> { selectNav(btnNavSearch, navBtns); showFreelancerSearch(); });
         btnNavProgress.setOnAction(e -> { selectNav(btnNavProgress, navBtns); showMilestonesAndPayments(); });
         btnNavChat.setOnAction(e -> { selectNav(btnNavChat, navBtns); showChat(); });
         btnNavProfile.setOnAction(e -> { selectNav(btnNavProfile, navBtns); showCompanyProfile(); });
 
-        sidebar.getChildren().addAll(btnNavDash, btnNavFeed, btnNavPost, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile);
+        sidebar.getChildren().addAll(btnNavDash, btnNavFeed, btnNavPost, btnNavBids, btnNavProps, btnNavSearch, btnNavProgress, btnNavChat, btnNavProfile);
         root.setLeft(sidebar);
         root.setCenter(contentArea);
 
@@ -149,11 +151,15 @@ public class ClientMainView {
         ClientProfile cp = db.getClientProfiles().get(currentUser.getId());
         double spent = cp != null ? cp.getTotalSpent() : 0.0;
 
+        // Count total bids received across all job posts
+        int totalBids = db.countBidsForClient(currentUser.getId());
+
         HBox statGrid = new HBox(15);
-        VBox card1 = UIComponents.createStatCard("📢", "Projects Posted", String.valueOf(getPostedProjectCount()), UIComponents.COLOR_PRIMARY);
-        VBox card2 = UIComponents.createStatCard("🤝", "Active Contracts", String.valueOf(getActiveContractCount()), UIComponents.COLOR_SUCCESS);
+        VBox card1 = UIComponents.createStatCard("📢", "Projects Posted", String.valueOf(db.countProjectsByClient(currentUser.getId())), UIComponents.COLOR_PRIMARY);
+        VBox card2 = UIComponents.createStatCard("🤝", "Active Contracts", String.valueOf(db.countActiveContractsByClient(currentUser.getId())), UIComponents.COLOR_SUCCESS);
         VBox card3 = UIComponents.createStatCard("💰", "Total Capital Spent", "$" + String.format("%.2f", spent), UIComponents.COLOR_AMBER);
-        statGrid.getChildren().addAll(card1, card2, card3);
+        VBox card4 = UIComponents.createStatCard("🎯", "Bids Received", String.valueOf(totalBids), UIComponents.COLOR_PURPLE);
+        statGrid.getChildren().addAll(card1, card2, card3, card4);
 
         // Category Budget Chart
         Map<String, Double> catMap = new HashMap<>();
@@ -168,29 +174,27 @@ public class ClientMainView {
         VBox projCard = UIComponents.createCard();
         projCard.getChildren().add(UIComponents.createHeader("📁 Your Posted Projects"));
 
-        for (Project p : db.getProjects().values()) {
-            if (p.getClientId().equals(currentUser.getId())) {
-                HBox row = new HBox(15);
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.setPadding(new Insets(10));
-                row.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-background-radius: 8;");
+        for (Project p : db.getProjectsByClient(currentUser.getId())) {
+            HBox row = new HBox(15);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(10));
+            row.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-background-radius: 8;");
 
-                VBox det = new VBox(4);
-                Label pTitle = new Label(p.getTitle());
-                pTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-                pTitle.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+            VBox det = new VBox(4);
+            Label pTitle = new Label(p.getTitle());
+            pTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+            pTitle.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
 
-                Label pMeta = new Label("Category: " + p.getCategory() + " | Budget: $" + p.getBudget() + " | Status: " + p.getStatus());
-                pMeta.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
-                det.getChildren().addAll(pTitle, pMeta);
+            Label pMeta = new Label("Category: " + p.getCategory() + " | Budget: $" + p.getBudget() + " | Status: " + p.getStatus());
+            pMeta.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+            det.getChildren().addAll(pTitle, pMeta);
 
-                Region sp = new Region();
-                HBox.setHgrow(sp, Priority.ALWAYS);
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
 
-                Label badge = UIComponents.createBadge(p.getStatus().toString(), UIComponents.COLOR_PRIMARY, "white");
-                row.getChildren().addAll(det, sp, badge);
-                projCard.getChildren().add(row);
-            }
+            Label badge = UIComponents.createBadge(p.getStatus().toString(), UIComponents.COLOR_PRIMARY, "white");
+            row.getChildren().addAll(det, sp, badge);
+            projCard.getChildren().add(row);
         }
 
         box.getChildren().addAll(title, statGrid, chartCard, projCard);
@@ -248,12 +252,9 @@ public class ClientMainView {
                 btnPost
         );
 
-        // Feed Timeline
+        // Feed Timeline (cached & indexed)
         VBox feedTimeline = new VBox(12);
-        java.util.List<FeedPost> posts = db.getFeedPosts().values().stream()
-                .filter(p -> p.getStatus() == FeedPost.PostStatus.ACTIVE)
-                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
-                .collect(Collectors.toList());
+        java.util.List<FeedPost> posts = db.getActiveFeedPostsSorted();
 
         if (posts.isEmpty()) {
             VBox emptyCard = UIComponents.createCard();
@@ -282,7 +283,11 @@ public class ClientMainView {
         authorLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
 
         Label roleBadge = UIComponents.createBadge(post.getAuthorRole(), UIComponents.COLOR_PRIMARY, "white");
-        Label catBadge = UIComponents.createBadge(post.getCategory().toString(), UIComponents.COLOR_PURPLE, "white");
+
+        // Use distinct badge for JOB_POST
+        String catDisplay = post.getCategory() == FeedPost.PostCategory.JOB_POST ? "💼 JOB POST" : post.getCategory().toString();
+        String catColor = post.getCategory() == FeedPost.PostCategory.JOB_POST ? UIComponents.COLOR_SUCCESS : UIComponents.COLOR_PURPLE;
+        Label catBadge = UIComponents.createBadge(catDisplay, catColor, "white");
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
@@ -304,6 +309,41 @@ public class ClientMainView {
         postContent.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
         postContent.setFont(Font.font("Segoe UI", 13));
 
+        // Show linked project details for JOB_POST
+        if (post.getCategory() == FeedPost.PostCategory.JOB_POST && post.getLinkedProjectId() != null) {
+            Project linkedProj = db.getProjects().get(post.getLinkedProjectId());
+            if (linkedProj != null) {
+                HBox projInfoBar = new HBox(8);
+                projInfoBar.setAlignment(Pos.CENTER_LEFT);
+                projInfoBar.setPadding(new Insets(8, 12, 8, 12));
+                projInfoBar.setStyle("-fx-background-color: #1a2744; -fx-background-radius: 8; -fx-border-color: " + UIComponents.COLOR_PRIMARY + "; -fx-border-radius: 8; -fx-border-width: 1;");
+
+                Label budgetLbl = new Label("💰 $" + String.format("%.0f", linkedProj.getBudget()));
+                budgetLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+                budgetLbl.setTextFill(Color.web(UIComponents.COLOR_SUCCESS));
+
+                Label deadlineLbl = new Label("📅 " + linkedProj.getDeadline());
+                deadlineLbl.setFont(Font.font("Segoe UI", 12));
+                deadlineLbl.setTextFill(Color.web(UIComponents.COLOR_AMBER));
+
+                Label statusLbl = UIComponents.createBadge(linkedProj.getStatus().toString(), UIComponents.COLOR_PRIMARY, "white");
+
+                // Skills as badges
+                HBox skillsRow = new HBox(4);
+                for (String skill : linkedProj.getRequiredSkills()) {
+                    Label skillBadge = UIComponents.createBadge(skill, UIComponents.COLOR_BG_INPUT, UIComponents.COLOR_TEXT_PRIMARY);
+                    skillsRow.getChildren().add(skillBadge);
+                }
+
+                projInfoBar.getChildren().addAll(budgetLbl, deadlineLbl, statusLbl, skillsRow);
+                card.getChildren().addAll(authorRow, postTitle, postContent, projInfoBar);
+            } else {
+                card.getChildren().addAll(authorRow, postTitle, postContent);
+            }
+        } else {
+            card.getChildren().addAll(authorRow, postTitle, postContent);
+        }
+
         // Action buttons
         HBox actionBar = new HBox(12);
         actionBar.setAlignment(Pos.CENTER_LEFT);
@@ -319,6 +359,14 @@ public class ClientMainView {
         });
 
         Button btnComment = UIComponents.createSecondaryButton("💬 Comments (" + post.getComments().size() + ")");
+
+        actionBar.getChildren().addAll(btnLike, btnComment);
+
+        // Show bids count for JOB_POST
+        if (post.getCategory() == FeedPost.PostCategory.JOB_POST) {
+            Label bidCountBadge = UIComponents.createBadge("🎯 " + post.getBids().size() + " Bids", UIComponents.COLOR_AMBER, "white");
+            actionBar.getChildren().add(bidCountBadge);
+        }
 
         Button btnFeedback = UIComponents.createSuccessButton("⭐ Give Feedback");
         btnFeedback.setOnAction(e -> {
@@ -343,7 +391,100 @@ public class ClientMainView {
             });
         });
 
-        actionBar.getChildren().addAll(btnLike, btnComment, btnFeedback);
+        // Only show feedback button for non-own posts
+        if (!post.getAuthorId().equals(currentUser.getId())) {
+            actionBar.getChildren().add(btnFeedback);
+        }
+
+        card.getChildren().add(actionBar);
+
+        // Bids section for JOB_POST (visible to post owner — the client)
+        if (post.getCategory() == FeedPost.PostCategory.JOB_POST
+                && post.getAuthorId().equals(currentUser.getId())
+                && !post.getBids().isEmpty()) {
+
+            VBox bidsSection = new VBox(8);
+            bidsSection.setPadding(new Insets(10, 0, 0, 0));
+
+            Label bidsHeader = new Label("📋 Bids Received (" + post.getBids().size() + "):");
+            bidsHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+            bidsHeader.setTextFill(Color.web(UIComponents.COLOR_AMBER));
+            bidsSection.getChildren().add(bidsHeader);
+
+            Project linkedProj = post.getLinkedProjectId() != null ? db.getProjects().get(post.getLinkedProjectId()) : null;
+
+            for (FeedPost.FeedBid bid : post.getBids()) {
+                VBox bidCard = new VBox(6);
+                bidCard.setPadding(new Insets(10, 12, 10, 12));
+                bidCard.setStyle("-fx-background-color: #1a2744; -fx-background-radius: 8; -fx-border-color: " + UIComponents.COLOR_BORDER + "; -fx-border-radius: 8;");
+
+                // Bid header: name, amount, days, timestamp
+                HBox bidTop = new HBox(10);
+                bidTop.setAlignment(Pos.CENTER_LEFT);
+                Label bidderName = new Label("👤 " + bid.getFreelancerName());
+                bidderName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+                bidderName.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+
+                Label bidAmount = UIComponents.createBadge("$" + String.format("%.0f", bid.getBidAmount()), UIComponents.COLOR_SUCCESS, "white");
+                Label bidDays = UIComponents.createBadge(bid.getEstimatedDays() + " days", UIComponents.COLOR_PRIMARY, "white");
+
+                Region bidSp = new Region();
+                HBox.setHgrow(bidSp, Priority.ALWAYS);
+
+                Label bidTime = new Label("🕒 Bid placed: " + bid.getTimestamp());
+                bidTime.setFont(Font.font("Segoe UI", 11));
+                bidTime.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+
+                bidTop.getChildren().addAll(bidderName, bidAmount, bidDays, bidSp, bidTime);
+
+                // Skills row
+                HBox skillsRow = new HBox(4);
+                skillsRow.setPadding(new Insets(2, 0, 2, 0));
+                for (String skill : bid.getFreelancerSkills()) {
+                    String skillColor = UIComponents.COLOR_BG_INPUT;
+                    // Highlight matching skills
+                    if (linkedProj != null && linkedProj.getRequiredSkills().stream()
+                            .anyMatch(rs -> rs.equalsIgnoreCase(skill))) {
+                        skillColor = UIComponents.COLOR_SUCCESS;
+                    }
+                    Label skillBadge = UIComponents.createBadge(skill, skillColor, "white");
+                    skillsRow.getChildren().add(skillBadge);
+                }
+
+                // Skill match indicator
+                if (linkedProj != null) {
+                    long matchCount = bid.getFreelancerSkills().stream()
+                            .filter(s -> linkedProj.getRequiredSkills().stream().anyMatch(rs -> rs.equalsIgnoreCase(s)))
+                            .count();
+                    int matchPct = linkedProj.getRequiredSkills().isEmpty() ? 0 : (int) ((matchCount * 100) / linkedProj.getRequiredSkills().size());
+                    Label matchBadge = UIComponents.createBadge(matchPct + "% Skill Match", matchPct >= 50 ? UIComponents.COLOR_SUCCESS : UIComponents.COLOR_AMBER, "white");
+                    skillsRow.getChildren().add(matchBadge);
+                }
+
+                // Cover letter preview
+                Label coverLbl = new Label(bid.getCoverLetter());
+                coverLbl.setWrapText(true);
+                coverLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                coverLbl.setFont(Font.font("Segoe UI", 12));
+
+                bidCard.getChildren().addAll(bidTop, skillsRow, coverLbl);
+
+                // Assign button (only if project is still OPEN)
+                if (linkedProj != null && linkedProj.getStatus() == Project.Status.OPEN) {
+                    Button btnAssign = UIComponents.createSuccessButton("✅ Assign " + bid.getFreelancerName());
+                    btnAssign.setOnAction(e -> assignFreelancerFromBid(post, bid, linkedProj));
+                    bidCard.getChildren().add(btnAssign);
+                } else if (linkedProj != null && linkedProj.getAssignedFreelancerId() != null
+                        && linkedProj.getAssignedFreelancerId().equals(bid.getFreelancerId())) {
+                    Label assignedBadge = UIComponents.createBadge("✅ ASSIGNED", UIComponents.COLOR_SUCCESS, "white");
+                    bidCard.getChildren().add(assignedBadge);
+                }
+
+                bidsSection.getChildren().add(bidCard);
+            }
+
+            card.getChildren().add(bidsSection);
+        }
 
         // Comments section
         VBox commentsBox = new VBox(6);
@@ -395,8 +536,51 @@ public class ClientMainView {
         addCmtBar.getChildren().addAll(tfComment, btnAddCmt);
         commentsBox.getChildren().add(addCmtBar);
 
-        card.getChildren().addAll(authorRow, postTitle, postContent, actionBar, commentsBox);
+        card.getChildren().add(commentsBox);
         return card;
+    }
+
+    // Assign freelancer from a bid
+    private void assignFreelancerFromBid(FeedPost post, FeedPost.FeedBid bid, Project project) {
+        project.setStatus(Project.Status.IN_PROGRESS);
+        project.setAssignedFreelancerId(bid.getFreelancerId());
+        project.setAssignedFreelancerName(bid.getFreelancerName());
+
+        // Create initial milestone
+        Milestone ms = new Milestone("ms_" + System.currentTimeMillis(), project.getId(),
+                "Project Deliverables & Source Code Handover",
+                "Complete project build and documentation",
+                bid.getBidAmount(), project.getDeadline(), Milestone.Status.IN_PROGRESS);
+        db.getMilestones().put(ms.getId(), ms);
+
+        // Also create a formal Proposal record
+        String propId = "prop_" + System.currentTimeMillis();
+        Proposal prop = new Proposal(propId, project.getId(), project.getTitle(),
+                bid.getFreelancerId(), bid.getFreelancerName(),
+                bid.getCoverLetter(), bid.getBidAmount(), bid.getEstimatedDays(),
+                Proposal.Status.ACCEPTED,
+                new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+        db.getProposals().put(propId, prop);
+
+        db.getProjects().put(project.getId(), project);
+
+        // Send notification
+        notifService.sendNotification(bid.getFreelancerId(), "🎉 You're Hired!",
+                currentUser.getUsername() + " has assigned you to project '" + project.getTitle()
+                + "' based on your bid of $" + String.format("%.0f", bid.getBidAmount()) + ".");
+
+        db.logActivitySilent("Client " + currentUser.getUsername() + " assigned freelancer " + bid.getFreelancerName()
+                + " to project " + project.getTitle() + " (from bid)");
+        db.invalidateCaches();
+        db.saveData();
+
+        UIComponents.showAlert(Alert.AlertType.INFORMATION, "Freelancer Assigned", "Success!",
+                bid.getFreelancerName() + " has been assigned to '" + project.getTitle()
+                + "'!\n\nBid Amount: $" + String.format("%.0f", bid.getBidAmount())
+                + "\nEstimated Delivery: " + bid.getEstimatedDays() + " days"
+                + "\nMilestone contract initialized.");
+
+        showFeed();
     }
 
     private int getPostedProjectCount() {
@@ -407,7 +591,7 @@ public class ClientMainView {
         return (int) db.getProjects().values().stream().filter(p -> p.getClientId().equals(currentUser.getId()) && p.getStatus() == Project.Status.IN_PROGRESS).count();
     }
 
-    // 2. Post New Project & AI Generator
+    // 2. Post New Project & AI Generator (auto-posts to feed as JOB_POST)
     private void showPostProject() {
         VBox box = new VBox(15);
         Label title = UIComponents.createTitle("Post New Project with AI Assistance");
@@ -459,14 +643,37 @@ public class ClientMainView {
                 String[] skArr = tfSkills.getText().split(",");
                 List<String> skList = java.util.Arrays.stream(skArr).map(String::trim).filter(s -> !s.isEmpty()).toList();
 
+                String nowDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+                String nowFull = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(new java.util.Date());
+
                 Project project = new Project(projId, currentUser.getId(), currentUser.getUsername(), pTitle, cbCat.getValue(), desc,
-                        skList, budget, dl, Project.Status.OPEN, null, null, new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                        skList, budget, dl, Project.Status.OPEN, null, null, nowDate);
 
                 db.getProjects().put(projId, project);
-                db.logActivity("Client " + currentUser.getUsername() + " posted new project: " + pTitle);
+
+                // Auto-create JOB_POST in feed
+                String feedId = "feed_job_" + System.currentTimeMillis();
+                StringBuilder jobContent = new StringBuilder();
+                jobContent.append(desc);
+                jobContent.append("\n\n💰 Budget: $").append(String.format("%.2f", budget));
+                jobContent.append("\n📅 Deadline: ").append(dl);
+                if (!skList.isEmpty()) {
+                    jobContent.append("\n🛠 Required Skills: ").append(String.join(", ", skList));
+                }
+                jobContent.append("\n📂 Category: ").append(cbCat.getValue());
+
+                FeedPost jobPost = new FeedPost(feedId, currentUser.getId(), currentUser.getUsername(), "CLIENT",
+                        "💼 " + pTitle, jobContent.toString(),
+                        FeedPost.PostCategory.JOB_POST, FeedPost.PostStatus.ACTIVE, nowFull);
+                jobPost.setLinkedProjectId(projId);
+                db.getFeedPosts().put(feedId, jobPost);
+
+                db.logActivitySilent("Client " + currentUser.getUsername() + " posted new project: " + pTitle + " (auto-posted to feed)");
+                db.invalidateCaches();
                 db.saveData();
 
-                UIComponents.showAlert(Alert.AlertType.INFORMATION, "Success", "Project Posted", "Your project has been posted to the freelancer marketplace!");
+                UIComponents.showAlert(Alert.AlertType.INFORMATION, "Success", "Project Posted",
+                        "Your project has been posted to the marketplace AND added to the community feed as a job post!\n\nFreelancers can now see it, like, comment, and bid on it.");
                 showDashboard();
             } catch (Exception ex) {
                 UIComponents.showAlert(Alert.AlertType.ERROR, "Input Error", "Invalid Budget", "Please enter a valid numeric budget amount.");
@@ -487,7 +694,190 @@ public class ClientMainView {
         contentArea.getChildren().setAll(new ScrollPane(box));
     }
 
-    // 3. Proposal Review & Hiring
+    // 3. Job Bids & Assign — Dedicated view for reviewing bids and assigning freelancers
+    private void showJobBidsAndAssign() {
+        VBox box = new VBox(15);
+        Label title = UIComponents.createTitle("📋 Job Bids & Freelancer Assignment");
+        Label subtitle = new Label("Review all bids on your job posts, compare freelancer skills, and assign the best candidate.");
+        subtitle.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+        subtitle.setWrapText(true);
+        subtitle.setFont(Font.font("Segoe UI", 13));
+
+        VBox jobList = new VBox(15);
+
+        // Get all JOB_POST feed posts by this client (indexed & cached)
+        List<FeedPost> myJobPosts = db.getJobPostsByClient(currentUser.getId());
+
+        if (myJobPosts.isEmpty()) {
+            VBox emptyCard = UIComponents.createCard();
+            Label emptyLbl = new Label("You haven't posted any jobs yet. Go to 'Post New Project' to create a job that freelancers can bid on!");
+            emptyLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+            emptyLbl.setWrapText(true);
+            emptyCard.getChildren().add(emptyLbl);
+            jobList.getChildren().add(emptyCard);
+        } else {
+            for (FeedPost jobPost : myJobPosts) {
+                Project linkedProj = jobPost.getLinkedProjectId() != null ? db.getProjects().get(jobPost.getLinkedProjectId()) : null;
+
+                VBox jobCard = UIComponents.createCard();
+
+                // Job header
+                HBox jobHeader = new HBox(10);
+                jobHeader.setAlignment(Pos.CENTER_LEFT);
+                Label jobTitle = new Label(jobPost.getTitle());
+                jobTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
+                jobTitle.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+                jobTitle.setWrapText(true);
+
+                Region hsp = new Region();
+                HBox.setHgrow(hsp, Priority.ALWAYS);
+
+                Label statusBadge;
+                if (linkedProj != null && linkedProj.getStatus() == Project.Status.IN_PROGRESS) {
+                    statusBadge = UIComponents.createBadge("✅ ASSIGNED", UIComponents.COLOR_SUCCESS, "white");
+                } else {
+                    statusBadge = UIComponents.createBadge("🟢 OPEN", UIComponents.COLOR_PRIMARY, "white");
+                }
+
+                Label bidsCountBadge = UIComponents.createBadge("🎯 " + jobPost.getBids().size() + " Bids", UIComponents.COLOR_AMBER, "white");
+                Label likesCountBadge = UIComponents.createBadge("👍 " + jobPost.getLikes() + " Likes", UIComponents.COLOR_BG_INPUT, UIComponents.COLOR_TEXT_PRIMARY);
+                Label commentsCountBadge = UIComponents.createBadge("💬 " + jobPost.getComments().size(), UIComponents.COLOR_BG_INPUT, UIComponents.COLOR_TEXT_PRIMARY);
+
+                jobHeader.getChildren().addAll(jobTitle, hsp, likesCountBadge, commentsCountBadge, bidsCountBadge, statusBadge);
+
+                // Project details row
+                HBox detailsRow = new HBox(12);
+                detailsRow.setPadding(new Insets(6, 0, 6, 0));
+                if (linkedProj != null) {
+                    Label budgetLbl = new Label("💰 Budget: $" + String.format("%.0f", linkedProj.getBudget()));
+                    budgetLbl.setTextFill(Color.web(UIComponents.COLOR_SUCCESS));
+                    budgetLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+
+                    Label deadlineLbl = new Label("📅 Deadline: " + linkedProj.getDeadline());
+                    deadlineLbl.setTextFill(Color.web(UIComponents.COLOR_AMBER));
+                    deadlineLbl.setFont(Font.font("Segoe UI", 12));
+
+                    Label catLbl = new Label("📂 " + linkedProj.getCategory());
+                    catLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+
+                    Label postedLbl = new Label("🕒 Posted: " + jobPost.getTimestamp());
+                    postedLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                    postedLbl.setFont(Font.font("Segoe UI", 11));
+
+                    detailsRow.getChildren().addAll(budgetLbl, deadlineLbl, catLbl, postedLbl);
+                }
+
+                // Required skills
+                if (linkedProj != null && !linkedProj.getRequiredSkills().isEmpty()) {
+                    HBox reqSkills = new HBox(4);
+                    reqSkills.setAlignment(Pos.CENTER_LEFT);
+                    Label reqLbl = new Label("Required: ");
+                    reqLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+                    reqLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                    reqSkills.getChildren().add(reqLbl);
+                    for (String sk : linkedProj.getRequiredSkills()) {
+                        reqSkills.getChildren().add(UIComponents.createBadge(sk, UIComponents.COLOR_PRIMARY, "white"));
+                    }
+                    jobCard.getChildren().addAll(jobHeader, detailsRow, reqSkills);
+                } else {
+                    jobCard.getChildren().addAll(jobHeader, detailsRow);
+                }
+
+                // Bids list
+                if (jobPost.getBids().isEmpty()) {
+                    Label noBids = new Label("No bids yet. Freelancers will see this job in their feed and can place bids.");
+                    noBids.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                    noBids.setFont(Font.font("Segoe UI", 12));
+                    jobCard.getChildren().add(noBids);
+                } else {
+                    Label bidsLabel = new Label("📋 Freelancer Bids:");
+                    bidsLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+                    bidsLabel.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+                    jobCard.getChildren().add(bidsLabel);
+
+                    for (FeedPost.FeedBid bid : jobPost.getBids()) {
+                        VBox bidCard = new VBox(6);
+                        bidCard.setPadding(new Insets(12));
+                        bidCard.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-background-radius: 8;");
+
+                        // Top row: name + amount + days + timestamp
+                        HBox bidTop = new HBox(10);
+                        bidTop.setAlignment(Pos.CENTER_LEFT);
+
+                        Label nameLabel = new Label("👤 " + bid.getFreelancerName());
+                        nameLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+                        nameLabel.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+
+                        Label amtBadge = UIComponents.createBadge("💰 $" + String.format("%.0f", bid.getBidAmount()), UIComponents.COLOR_SUCCESS, "white");
+                        Label daysBadge = UIComponents.createBadge("📅 " + bid.getEstimatedDays() + " days", UIComponents.COLOR_PRIMARY, "white");
+
+                        Region bidSpacer = new Region();
+                        HBox.setHgrow(bidSpacer, Priority.ALWAYS);
+
+                        Label timestampLbl = new Label("🕒 " + bid.getTimestamp());
+                        timestampLbl.setFont(Font.font("Segoe UI", 11));
+                        timestampLbl.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+
+                        bidTop.getChildren().addAll(nameLabel, amtBadge, daysBadge, bidSpacer, timestampLbl);
+
+                        // Skills row with match highlighting
+                        HBox skillsRow = new HBox(4);
+                        skillsRow.setPadding(new Insets(4, 0, 4, 0));
+                        int matchedSkills = 0;
+                        for (String skill : bid.getFreelancerSkills()) {
+                            boolean isMatch = linkedProj != null && linkedProj.getRequiredSkills().stream()
+                                    .anyMatch(rs -> rs.equalsIgnoreCase(skill));
+                            if (isMatch) matchedSkills++;
+                            Label skillBadge = UIComponents.createBadge(
+                                    (isMatch ? "✓ " : "") + skill,
+                                    isMatch ? UIComponents.COLOR_SUCCESS : "#2a3a5c",
+                                    "white");
+                            skillsRow.getChildren().add(skillBadge);
+                        }
+
+                        // Match percentage
+                        int matchPct = (linkedProj != null && !linkedProj.getRequiredSkills().isEmpty())
+                                ? (matchedSkills * 100 / linkedProj.getRequiredSkills().size()) : 0;
+                        Label matchLabel = UIComponents.createBadge(matchPct + "% Match",
+                                matchPct >= 75 ? UIComponents.COLOR_SUCCESS : matchPct >= 50 ? UIComponents.COLOR_AMBER : UIComponents.COLOR_DANGER,
+                                "white");
+                        skillsRow.getChildren().add(matchLabel);
+
+                        // Cover letter
+                        Label coverLetter = new Label("📝 " + bid.getCoverLetter());
+                        coverLetter.setWrapText(true);
+                        coverLetter.setTextFill(Color.web(UIComponents.COLOR_TEXT_MUTED));
+                        coverLetter.setFont(Font.font("Segoe UI", 12));
+
+                        bidCard.getChildren().addAll(bidTop, skillsRow, coverLetter);
+
+                        // Assign button
+                        if (linkedProj != null && linkedProj.getStatus() == Project.Status.OPEN) {
+                            Button btnAssign = UIComponents.createSuccessButton("✅ Assign " + bid.getFreelancerName() + " to Project");
+                            btnAssign.setOnAction(ev -> {
+                                assignFreelancerFromBid(jobPost, bid, linkedProj);
+                                showJobBidsAndAssign(); // refresh
+                            });
+                            bidCard.getChildren().add(btnAssign);
+                        } else if (linkedProj != null && linkedProj.getAssignedFreelancerId() != null
+                                && linkedProj.getAssignedFreelancerId().equals(bid.getFreelancerId())) {
+                            Label assignedLabel = UIComponents.createBadge("✅ ASSIGNED TO THIS FREELANCER", UIComponents.COLOR_SUCCESS, "white");
+                            bidCard.getChildren().add(assignedLabel);
+                        }
+
+                        jobCard.getChildren().add(bidCard);
+                    }
+                }
+
+                jobList.getChildren().add(jobCard);
+            }
+        }
+
+        box.getChildren().addAll(title, subtitle, jobList);
+        contentArea.getChildren().setAll(new ScrollPane(box));
+    }
+
+    // 4. Proposal Review & Hiring
     private void showProposals() {
         VBox box = new VBox(15);
         Label title = UIComponents.createTitle("Review Proposals & Hire Freelancers");
@@ -551,7 +941,7 @@ public class ClientMainView {
         contentArea.getChildren().setAll(new ScrollPane(box));
     }
 
-    // 4. Find Freelancers
+    // 5. Find Freelancers
     private void showFreelancerSearch() {
         VBox box = new VBox(15);
         Label title = UIComponents.createTitle("Search Freelancers & AI Talent Recommendations");
@@ -584,69 +974,66 @@ public class ClientMainView {
         contentArea.getChildren().setAll(new ScrollPane(box));
     }
 
-    // 5. Milestones & Razorpay Payment Release with Export Receipt
+    // 6. Milestones & Razorpay Payment Release with Export Receipt
     private void showMilestonesAndPayments() {
         VBox box = new VBox(15);
         Label title = UIComponents.createTitle("Milestone Progress & Razorpay Payments");
 
         VBox list = new VBox(15);
-        for (Project proj : db.getProjects().values()) {
-            if (proj.getClientId().equals(currentUser.getId())) {
-                VBox card = UIComponents.createCard();
-                Label pTitle = UIComponents.createHeader("Project: " + proj.getTitle());
+        for (Project proj : db.getProjectsByClient(currentUser.getId())) {
+            VBox card = UIComponents.createCard();
+            Label pTitle = UIComponents.createHeader("Project: " + proj.getTitle());
 
-                VBox msContainer = new VBox(8);
-                for (Milestone m : db.getMilestones().values()) {
-                    if (m.getProjectId().equals(proj.getId())) {
-                        HBox row = new HBox(12);
-                        row.setAlignment(Pos.CENTER_LEFT);
-                        row.setPadding(new Insets(10));
-                        row.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-background-radius: 8;");
+            VBox msContainer = new VBox(8);
+            for (Milestone m : db.getMilestonesByProject(proj.getId())) {
+                HBox row = new HBox(12);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setPadding(new Insets(10));
+                row.setStyle("-fx-background-color: " + UIComponents.COLOR_BG_INPUT + "; -fx-background-radius: 8;");
 
-                        Label mText = new Label(m.getTitle() + " - $" + m.getAmount() + " [" + m.getStatus() + "]");
-                        mText.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
-                        Region sp = new Region();
-                        HBox.setHgrow(sp, Priority.ALWAYS);
+                Label mText = new Label(m.getTitle() + " - $" + m.getAmount() + " [" + m.getStatus() + "]");
+                mText.setTextFill(Color.web(UIComponents.COLOR_TEXT_PRIMARY));
+                Region sp = new Region();
+                HBox.setHgrow(sp, Priority.ALWAYS);
 
-                        if (m.getStatus() == Milestone.Status.SUBMITTED || m.getStatus() == Milestone.Status.APPROVED) {
-                            Button btnPayRzp = UIComponents.createSuccessButton("💳 Release Payment via Razorpay");
-                            btnPayRzp.setOnAction(e -> {
-                                PaymentService.PaymentReceipt receipt = paymentService.processRazorpayPayment(m, proj);
+                if (m.getStatus() == Milestone.Status.SUBMITTED || m.getStatus() == Milestone.Status.APPROVED) {
+                    Button btnPayRzp = UIComponents.createSuccessButton("💳 Release Payment via Razorpay");
+                    btnPayRzp.setOnAction(e -> {
+                        PaymentService.PaymentReceipt receipt = paymentService.processRazorpayPayment(m, proj);
 
-                                ClientProfile cp = db.getClientProfiles().get(currentUser.getId());
-                                if (cp != null) {
-                                    cp.setTotalSpent(cp.getTotalSpent() + m.getAmount());
-                                    db.getClientProfiles().put(currentUser.getId(), cp);
-                                }
-
-                                notifService.sendNotification(proj.getAssignedFreelancerId(), "Payment Released!", "Razorpay Payment of $" + m.getAmount() + " released for milestone '" + m.getTitle() + "'");
-
-                                try (PrintWriter out = new PrintWriter(new File("Invoice_Receipt_" + receipt.transactionId + ".txt"))) {
-                                    out.println(receipt.toString());
-                                } catch (Exception ex) {}
-
-                                UIComponents.showAlert(Alert.AlertType.INFORMATION, "Razorpay Payment Released", "Payment Success & Invoice Saved", receipt.toString() + "\n\nInvoice exported to Invoice_Receipt_" + receipt.transactionId + ".txt");
-                                showMilestonesAndPayments();
-                            });
-                            row.getChildren().addAll(mText, sp, btnPayRzp);
-                        } else {
-                            Label statusBadge = UIComponents.createBadge("Status: " + m.getStatus(), UIComponents.COLOR_PRIMARY, "white");
-                            row.getChildren().addAll(mText, sp, statusBadge);
+                        ClientProfile cp = db.getClientProfiles().get(currentUser.getId());
+                        if (cp != null) {
+                            cp.setTotalSpent(cp.getTotalSpent() + m.getAmount());
+                            db.getClientProfiles().put(currentUser.getId(), cp);
                         }
-                        msContainer.getChildren().add(row);
-                    }
-                }
 
-                card.getChildren().addAll(pTitle, msContainer);
-                list.getChildren().add(card);
+                        notifService.sendNotification(proj.getAssignedFreelancerId(), "Payment Released!", "Razorpay Payment of $" + m.getAmount() + " released for milestone '" + m.getTitle() + "'");
+
+                        try (PrintWriter out = new PrintWriter(new File("Invoice_Receipt_" + receipt.transactionId + ".txt"))) {
+                            out.println(receipt.toString());
+                        } catch (Exception ex) {}
+
+                        db.invalidateCaches();
+                        UIComponents.showAlert(Alert.AlertType.INFORMATION, "Razorpay Payment Released", "Payment Success & Invoice Saved", receipt.toString() + "\n\nInvoice exported to Invoice_Receipt_" + receipt.transactionId + ".txt");
+                        showMilestonesAndPayments();
+                    });
+                    row.getChildren().addAll(mText, sp, btnPayRzp);
+                } else {
+                    Label statusBadge = UIComponents.createBadge("Status: " + m.getStatus(), UIComponents.COLOR_PRIMARY, "white");
+                    row.getChildren().addAll(mText, sp, statusBadge);
+                }
+                msContainer.getChildren().add(row);
             }
+
+            card.getChildren().addAll(pTitle, msContainer);
+            list.getChildren().add(card);
         }
 
         box.getChildren().addAll(title, list);
         contentArea.getChildren().setAll(new ScrollPane(box));
     }
 
-    // 6. Chat & Messaging
+    // 7. Chat & Messaging
     private String selectedChatProjectId = null;
 
     private void showChat() {
@@ -681,8 +1068,8 @@ public class ClientMainView {
         projectListPanel.getChildren().add(convLabel);
 
         boolean hasConversations = false;
-        for (Project p : db.getProjects().values()) {
-            if (p.getClientId().equals(currentUser.getId()) && p.getStatus() == Project.Status.IN_PROGRESS && p.getAssignedFreelancerId() != null) {
+        for (Project p : db.getProjectsByClient(currentUser.getId())) {
+            if (p.getStatus() == Project.Status.IN_PROGRESS && p.getAssignedFreelancerId() != null) {
                 hasConversations = true;
                 boolean isSelected = p.getId().equals(selectedChatProjectId);
 
@@ -699,9 +1086,7 @@ public class ClientMainView {
                 freeName.setFont(Font.font("Segoe UI", 11));
                 freeName.setTextFill(Color.web(isSelected ? "#E0E0FF" : UIComponents.COLOR_TEXT_MUTED));
 
-                long msgCount = db.getChatMessages().values().stream()
-                        .filter(m -> m.getProjectId().equals(p.getId()))
-                        .count();
+                long msgCount = db.getChatByProject(p.getId()).size();
                 Label msgCountLbl = new Label(msgCount + " messages");
                 msgCountLbl.setFont(Font.font("Segoe UI", 10));
                 msgCountLbl.setTextFill(Color.web(isSelected ? "#C7D2FE" : UIComponents.COLOR_TEXT_MUTED));
@@ -736,8 +1121,8 @@ public class ClientMainView {
 
         if (selectedChatProjectId == null) {
             // Auto-select first available project
-            for (Project p : db.getProjects().values()) {
-                if (p.getClientId().equals(currentUser.getId()) && p.getStatus() == Project.Status.IN_PROGRESS && p.getAssignedFreelancerId() != null) {
+            for (Project p : db.getProjectsByClient(currentUser.getId())) {
+                if (p.getStatus() == Project.Status.IN_PROGRESS && p.getAssignedFreelancerId() != null) {
                     selectedChatProjectId = p.getId();
                     break;
                 }
@@ -766,10 +1151,7 @@ public class ClientMainView {
                 VBox msgContainer = new VBox(8);
                 msgContainer.setPadding(new Insets(8));
 
-                java.util.List<ChatMessage> projectMsgs = db.getChatMessages().values().stream()
-                        .filter(m -> m.getProjectId().equals(selectedChatProjectId))
-                        .sorted((a, b) -> a.getId().compareTo(b.getId()))
-                        .collect(Collectors.toList());
+                List<ChatMessage> projectMsgs = db.getChatByProject(selectedChatProjectId);
 
                 if (projectMsgs.isEmpty()) {
                     Label noMsg = new Label("No messages yet. Start the conversation with your freelancer!");
@@ -832,6 +1214,7 @@ public class ClientMainView {
                         ChatMessage cm = new ChatMessage(cmId, chatProjId, currentUser.getId(), currentUser.getUsername(), receiverId,
                                 tfMsg.getText().trim(), null, true, new java.text.SimpleDateFormat("hh:mm a").format(new java.util.Date()));
                         db.getChatMessages().put(cmId, cm);
+                        db.invalidateCaches();
                         db.saveData();
                         tfMsg.clear();
                         showChat();
@@ -846,6 +1229,7 @@ public class ClientMainView {
                     ChatMessage cm = new ChatMessage(cmId, chatProjId, currentUser.getId(), currentUser.getUsername(), receiverId,
                             "📎 Sent an attachment: " + attachName, attachName, true, new java.text.SimpleDateFormat("hh:mm a").format(new java.util.Date()));
                     db.getChatMessages().put(cmId, cm);
+                    db.invalidateCaches();
                     db.saveData();
                     showChat();
                 });
@@ -868,7 +1252,7 @@ public class ClientMainView {
         contentArea.getChildren().setAll(box);
     }
 
-    // 7. Company Profile
+    // 8. Company Profile
     private void showCompanyProfile() {
         VBox box = new VBox(15);
         Label title = UIComponents.createTitle("Company & Client Profile");
