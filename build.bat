@@ -3,7 +3,7 @@ set "JAVA_HOME=C:\Program Files\Java\jdk-17"
 set "PATH=%JAVA_HOME%\bin;%PATH%"
 
 echo ===================================================
-echo     Freelancing.SB Desktop Platform - Build Script
+echo       SkillBridge Desktop Platform - Build Script
 echo ===================================================
 
 echo Compiling Java 17 JavaFX application via Maven...

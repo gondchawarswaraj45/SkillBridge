@@ -1,13 +1,30 @@
 package com.freelancing.db;
 
-import com.freelancing.model.*;
+import com.freelancing.dao.company.ProjectDAO;
+import com.freelancing.dao.company.ProjectSkillDAO;
+import com.freelancing.model.common.VideoCall;
+import com.freelancing.model.admin.Dispute;
+import com.freelancing.model.admin.SupportTicket;
+import com.freelancing.model.common.CalendarEvent;
+import com.freelancing.model.common.ChatMessage;
+import com.freelancing.model.common.FeedPost;
+import com.freelancing.model.common.Notification;
+import com.freelancing.model.common.User;
+import com.freelancing.model.company.ClientProfile;
+import com.freelancing.model.company.Contract;
+import com.freelancing.model.company.Milestone;
+import com.freelancing.model.company.Project;
+import com.freelancing.model.company.Proposal;
+import com.freelancing.model.company.Rating;
+import com.freelancing.model.freelancer.FreelancerProfile;
+import com.freelancing.model.freelancer.SkillSwapOffer;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DatabaseManager implements Serializable {
     private static final long serialVersionUID = 2L;
-    private static final String DATA_FILE = "freelancing_data.dat";
     private static DatabaseManager instance;
 
     // Core data stores
@@ -23,7 +40,13 @@ public class DatabaseManager implements Serializable {
     private Map<String, Notification> notifications = new ConcurrentHashMap<>();
     private Map<String, Rating> ratings = new ConcurrentHashMap<>();
     private Map<String, FeedPost> feedPosts = new ConcurrentHashMap<>();
+    private Map<String, SkillSwapOffer> skillSwapOffers = new ConcurrentHashMap<>();
     private List<String> activityLogs = Collections.synchronizedList(new ArrayList<>());
+
+    // === SkillBridge Escrow & Calendar Stores ===
+    private Map<String, Contract> contracts = new ConcurrentHashMap<>();
+    private Map<String, CalendarEvent> calendarEvents = new ConcurrentHashMap<>();
+    private Map<String, VideoCall> videoCalls = new ConcurrentHashMap<>();
 
     // === TRANSIENT CACHES (not serialized — rebuilt on demand) ===
     private transient Map<String, List<Project>> projectsByClientCache;
@@ -53,6 +76,9 @@ public class DatabaseManager implements Serializable {
         dataVersion = 0;
     }
 
+    public long getFeedCacheVersion() { return feedCacheVersion; }
+    public long getDataVersion() { return dataVersion; }
+
     /** Called after deserialization to restore transient fields */
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
@@ -66,28 +92,38 @@ public class DatabaseManager implements Serializable {
                 instance.seedInitialData();
                 instance.saveData();
             }
+            if (instance.skillSwapOffers == null) {
+                instance.skillSwapOffers = new ConcurrentHashMap<>();
+            }
+            if (instance.skillSwapOffers.isEmpty()) {
+                instance.seedSkillSwapOffers();
+                instance.saveData();
+            }
+            if (instance.contracts == null) {
+                instance.contracts = new ConcurrentHashMap<>();
+            }
+            if (instance.calendarEvents == null) {
+                instance.calendarEvents = new ConcurrentHashMap<>();
+            }
+            // Sync SQLite projects
+            try {
+                ProjectDAO pDao = new ProjectDAO();
+                ProjectSkillDAO psDao = new ProjectSkillDAO();
+                for (Project sp : pDao.findAll()) {
+                    sp.setRequiredSkills(psDao.findSkillNamesByProjectId(sp.getId()));
+                    instance.projects.put(sp.getId(), sp);
+                }
+            } catch (Exception ignored) {}
         }
         return instance;
     }
 
     private static DatabaseManager loadData() {
-        File file = new File(DATA_FILE);
-        if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-                return (DatabaseManager) ois.readObject();
-            } catch (Exception e) {
-                System.err.println("Error loading data file, re-initializing: " + e.getMessage());
-            }
-        }
         return new DatabaseManager();
     }
 
     public synchronized void saveData() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(DATA_FILE)))) {
-            oos.writeObject(this);
-        } catch (Exception e) {
-            System.err.println("Error saving database file: " + e.getMessage());
-        }
+        // In-memory synchronization only; SQLite (data/skillbridge.db) is the primary persistence engine
     }
 
     /** Invalidate all caches — call when data changes */
@@ -377,6 +413,41 @@ public class DatabaseManager implements Serializable {
                 2800.0, 15, "Hi Apex Studio! I specialize in modern dark dashboard design systems in Figma. Let's create an elegant UI for your SaaS userbase.",
                 Arrays.asList("Figma", "UI/UX", "Adobe XD", "CSS", "Wireframing", "Prototyping"), "2026-02-06 10:22:05"));
         feedPosts.put(jobPost3.getId(), jobPost3);
+
+        // 12. Peer-to-Peer Skill Swap / Barter Offers
+        seedSkillSwapOffers();
+    }
+
+    private void seedSkillSwapOffers() {
+        if (skillSwapOffers == null) skillSwapOffers = new ConcurrentHashMap<>();
+        
+        SkillSwapOffer so1 = new SkillSwapOffer("swap_01", "usr_free1", "Alex Johnson", "Senior Java & Cloud Architect",
+                "Java Spring Boot Microservices & Docker", "Flutter & Dart Mobile Development", "Senior (6+ Years)",
+                4, 2, SkillSwapOffer.Status.OPEN,
+                "Looking to exchange 4 hours/week of backend Spring Boot / AWS architecture mentoring in return for hands-on Flutter mobile development guidance.",
+                "2026-02-18", 4.95);
+        skillSwapOffers.put(so1.getId(), so1);
+
+        SkillSwapOffer so2 = new SkillSwapOffer("swap_02", "usr_free2", "Sarah Miller", "UI/UX & Mobile Product Designer",
+                "Figma Design Systems & Modern Dark UI", "React / Next.js Frontend Development", "Mid-Level (4 Years)",
+                3, 2, SkillSwapOffer.Status.OPEN,
+                "Offering professional Figma wireframing and design token architecture in exchange for Next.js 14 App Router and TypeScript pair programming.",
+                "2026-02-19", 4.90);
+        skillSwapOffers.put(so2.getId(), so2);
+
+        SkillSwapOffer so3 = new SkillSwapOffer("swap_03", "usr_free3", "David Kim", "DevOps & Kubernetes Engineer",
+                "Kubernetes Helm Charts & CI/CD Pipelines", "Python AI & LangChain LLMs", "Senior (7 Years)",
+                5, 3, SkillSwapOffer.Status.OPEN,
+                "I can set up production-grade GitHub Actions, ArgoCD, and Kubernetes clusters in exchange for guidance on building RAG pipelines with LangChain.",
+                "2026-02-20", 4.98);
+        skillSwapOffers.put(so3.getId(), so3);
+
+        SkillSwapOffer so4 = new SkillSwapOffer("swap_04", "usr_free4", "Elena Rostova", "AI/ML Research Specialist",
+                "PyTorch Deep Learning & NLP Transformers", "Cybersecurity & OAuth2 / JWT Hardening", "Lead (8 Years)",
+                4, 2, SkillSwapOffer.Status.OPEN,
+                "Offering transformer fine-tuning, embeddings, and vector database sessions in exchange for web application penetration testing & security audits.",
+                "2026-02-21", 4.97);
+        skillSwapOffers.put(so4.getId(), so4);
     }
 
     // Getters for Collections
@@ -392,7 +463,19 @@ public class DatabaseManager implements Serializable {
     public Map<String, Notification> getNotifications() { return notifications; }
     public Map<String, Rating> getRatings() { return ratings; }
     public Map<String, FeedPost> getFeedPosts() { return feedPosts; }
+    public Map<String, SkillSwapOffer> getSkillSwapOffers() { 
+        if (skillSwapOffers == null) skillSwapOffers = new ConcurrentHashMap<>();
+        return skillSwapOffers; 
+    }
     public List<String> getActivityLogs() { return activityLogs; }
+
+    // SkillBridge Escrow & Calendar Getters
+    public Map<String, Contract> getContracts() { return contracts; }
+    public Map<String, CalendarEvent> getCalendarEvents() { return calendarEvents; }
+    public Map<String, VideoCall> getVideoCalls() {
+        if (videoCalls == null) videoCalls = new ConcurrentHashMap<>();
+        return videoCalls;
+    }
 
     /** Log without saving — avoids O(n) serialization on every log entry */
     public void logActivitySilent(String entry) {
@@ -403,6 +486,5 @@ public class DatabaseManager implements Serializable {
     /** Log and save (backward compatible) */
     public void logActivity(String entry) {
         logActivitySilent(entry);
-        // Note: we no longer auto-save here; callers should batch saves
     }
 }

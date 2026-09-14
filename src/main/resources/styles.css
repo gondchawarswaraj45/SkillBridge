@@ -1,0 +1,138 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SkillBridge Global Theme Stylesheet
+   Guarantees ZERO default Modena white backgrounds across all viewports and controls
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.root {
+    -fx-base: #1E293B;
+    -fx-background: transparent;
+    -fx-control-inner-background: #1E293B;
+    -fx-focus-color: #6366F1;
+    -fx-faint-focus-color: rgba(99, 102, 241, 0.25);
+    -fx-font-family: 'Segoe UI', -apple-system, 'Helvetica Neue', sans-serif;
+}
+
+/* ScrollPane & Viewport transparency - eliminates white Modena canvas */
+.scroll-pane {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .corner {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+/* Sleek modern rounded scrollbars with indigo glow */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 2;
+}
+
+.scroll-bar:vertical .track, .scroll-bar:horizontal .track {
+    -fx-background-color: rgba(30, 41, 59, 0.35);
+    -fx-background-radius: 8;
+}
+
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+    -fx-background-color: #6366F1;
+    -fx-background-radius: 8;
+}
+
+.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #818CF8;
+}
+
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+/* Charts transparency */
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 8;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+}
+
+/* TabPane and Tabs */
+.tab-pane, .tab-content-area {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: #1E293B;
+    -fx-background-radius: 6 6 0 0;
+}
+
+.tab:selected {
+    -fx-background-color: #6366F1;
+}
+
+.tab-label {
+    -fx-text-fill: #F8FAFC;
+    -fx-font-weight: bold;
+}
+
+/* TableView styles */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #334155;
+    -fx-border-radius: 8;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #0F172A;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell {
+    -fx-background-color: #1E293B;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #182234;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #4338CA;
+}
+
+/* Tooltip */
+.tooltip {
+    -fx-background-color: #0F172A;
+    -fx-text-fill: #F8FAFC;
+    -fx-background-radius: 6;
+    -fx-border-color: #6366F1;
+    -fx-border-radius: 6;
+    -fx-padding: 6 10;
+    -fx-font-size: 12px;
+}
