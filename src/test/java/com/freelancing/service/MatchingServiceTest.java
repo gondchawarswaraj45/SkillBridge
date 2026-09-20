@@ -6,9 +6,6 @@ import com.freelancing.model.freelancer.MatchingResult;
 import com.freelancing.service.freelancer.AIProposalAssistant;
 import com.freelancing.service.freelancer.MatchingService;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,14 +17,11 @@ public class MatchingServiceTest {
     private MatchingService matchingService;
     private AIProposalAssistant proposalAssistant;
 
-    @BeforeEach
     public void setUp() {
         matchingService = new MatchingService();
         proposalAssistant = new AIProposalAssistant();
     }
 
-    @Test
-    @DisplayName("Verify 6-Factor Weights sum exactly to 100% on ideal profile")
     public void testPerfectMatchScoreAndWeights() {
         FreelancerProfile f = new FreelancerProfile();
         f.setId("free_test_1");
@@ -72,8 +66,6 @@ public class MatchingServiceTest {
         assertTrue(res.getExplanation().contains("100% Overall Match"));
     }
 
-    @Test
-    @DisplayName("Verify partial skill match, missing skill detection, and score scaling")
     public void testPartialSkillMatch() {
         FreelancerProfile f = new FreelancerProfile();
         f.setSkills(Arrays.asList("Java", "SQLite"));
@@ -105,8 +97,6 @@ public class MatchingServiceTest {
         assertTrue(res.getOverallScore() > 0 && res.getOverallScore() < 100);
     }
 
-    @Test
-    @DisplayName("Verify neutral fallback when project has no required skills")
     public void testEmptySkillsRequirementFallback() {
         FreelancerProfile f = new FreelancerProfile();
         f.setSkills(Arrays.asList("Python", "Django"));
@@ -127,8 +117,6 @@ public class MatchingServiceTest {
         assertTrue(res.getOverallScore() >= 70);
     }
 
-    @Test
-    @DisplayName("Verify AIProposalAssistant cover letter generation")
     public void testProposalAssistantCoverLetter() {
         FreelancerProfile f = new FreelancerProfile();
         f.setTitle("Lead Java Architect");
@@ -159,8 +147,6 @@ public class MatchingServiceTest {
         assertTrue(cover.contains("PROPOSED SPRINT MILESTONES"), "Should include milestone roadmap");
     }
 
-    @Test
-    @DisplayName("Verify AIProposalAssistant milestone breakdown sum equals total bid")
     public void testMilestoneBreakdownCalculation() {
         Project p = new Project();
         p.setExperienceLevel("INTERMEDIATE");
@@ -182,8 +168,6 @@ public class MatchingServiceTest {
         }
     }
 
-    @Test
-    @DisplayName("Verify AIProposalAssistant suggested bid and delivery days")
     public void testSuggestedBidAndDays() {
         Project pFixed = new Project();
         pFixed.setBudgetType("FIXED");
@@ -205,5 +189,79 @@ public class MatchingServiceTest {
 
         double bidHourly = proposalAssistant.suggestBidAmount(pHourly, f);
         assertEquals(65.0, bidHourly, 0.01, "Hourly bid should match freelancer rate within ceiling");
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running MatchingServiceTest...");
+        int passed = 0;
+        int total = 6;
+        try {
+            MatchingServiceTest test = new MatchingServiceTest();
+            test.setUp();
+            test.testPerfectMatchScoreAndWeights();
+            passed++;
+            System.out.println("  [PASS] testPerfectMatchScoreAndWeights");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testPerfectMatchScoreAndWeights: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            MatchingServiceTest test = new MatchingServiceTest();
+            test.setUp();
+            test.testPartialSkillMatch();
+            passed++;
+            System.out.println("  [PASS] testPartialSkillMatch");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testPartialSkillMatch: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            MatchingServiceTest test = new MatchingServiceTest();
+            test.setUp();
+            test.testEmptySkillsRequirementFallback();
+            passed++;
+            System.out.println("  [PASS] testEmptySkillsRequirementFallback");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testEmptySkillsRequirementFallback: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            MatchingServiceTest test = new MatchingServiceTest();
+            test.setUp();
+            test.testProposalAssistantCoverLetter();
+            passed++;
+            System.out.println("  [PASS] testProposalAssistantCoverLetter");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testProposalAssistantCoverLetter: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            MatchingServiceTest test = new MatchingServiceTest();
+            test.setUp();
+            test.testMilestoneBreakdownCalculation();
+            passed++;
+            System.out.println("  [PASS] testMilestoneBreakdownCalculation");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testMilestoneBreakdownCalculation: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            MatchingServiceTest test = new MatchingServiceTest();
+            test.setUp();
+            test.testSuggestedBidAndDays();
+            passed++;
+            System.out.println("  [PASS] testSuggestedBidAndDays");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSuggestedBidAndDays: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("MatchingServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in MatchingServiceTest");
+        }
     }
 }

@@ -9,9 +9,6 @@ import com.freelancing.service.common.NotificationService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,14 +26,12 @@ public class ChatServiceTest {
     private User freelancerUser;
     private String projectId;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         chatService = new ChatService();
         notificationService = new NotificationService();
     }
 
-    @BeforeEach
     public void setUp() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         clientUser = new User();
@@ -101,7 +96,6 @@ public class ChatServiceTest {
         }
     }
 
-    @Test
     public void testGetOrCreateConversationIdempotent() {
         Conversation conv1 = chatService.getOrCreateConversation(clientUser.getId(), freelancerUser.getId(), projectId);
         assertNotNull(conv1);
@@ -118,7 +112,6 @@ public class ChatServiceTest {
         assertEquals(freelancerUser.getUsername(), clientConvs.get(0).getOtherUsername());
     }
 
-    @Test
     public void testSendMessageAndNotificationDelivery() {
         Conversation conv = chatService.getOrCreateConversation(clientUser.getId(), freelancerUser.getId(), projectId);
 
@@ -138,7 +131,6 @@ public class ChatServiceTest {
         assertEquals("MESSAGE", freeNotifs.get(0).getType());
     }
 
-    @Test
     public void testMarkAsReadAndUnreadCounts() {
         Conversation conv = chatService.getOrCreateConversation(clientUser.getId(), freelancerUser.getId(), projectId);
 
@@ -161,14 +153,12 @@ public class ChatServiceTest {
         assertEquals(0, unreadAfterRead);
     }
 
-    @Test
     public void testCannotCreateConversationWithSelf() {
         assertThrows(IllegalArgumentException.class, () -> {
             chatService.getOrCreateConversation(clientUser.getId(), clientUser.getId(), projectId);
         });
     }
 
-    @Test
     public void testSendMessageValidations() {
         Conversation conv = chatService.getOrCreateConversation(clientUser.getId(), freelancerUser.getId(), projectId);
 
@@ -179,5 +169,76 @@ public class ChatServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             chatService.sendMessage("non_existent_conv", clientUser.getId(), "Content", null);
         });
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running ChatServiceTest...");
+        int passed = 0;
+        int total = 5;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for ChatServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            ChatServiceTest test = new ChatServiceTest();
+            test.setUp();
+            test.testGetOrCreateConversationIdempotent();
+            passed++;
+            System.out.println("  [PASS] testGetOrCreateConversationIdempotent");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testGetOrCreateConversationIdempotent: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ChatServiceTest test = new ChatServiceTest();
+            test.setUp();
+            test.testSendMessageAndNotificationDelivery();
+            passed++;
+            System.out.println("  [PASS] testSendMessageAndNotificationDelivery");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSendMessageAndNotificationDelivery: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ChatServiceTest test = new ChatServiceTest();
+            test.setUp();
+            test.testMarkAsReadAndUnreadCounts();
+            passed++;
+            System.out.println("  [PASS] testMarkAsReadAndUnreadCounts");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testMarkAsReadAndUnreadCounts: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ChatServiceTest test = new ChatServiceTest();
+            test.setUp();
+            test.testCannotCreateConversationWithSelf();
+            passed++;
+            System.out.println("  [PASS] testCannotCreateConversationWithSelf");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCannotCreateConversationWithSelf: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ChatServiceTest test = new ChatServiceTest();
+            test.setUp();
+            test.testSendMessageValidations();
+            passed++;
+            System.out.println("  [PASS] testSendMessageValidations");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSendMessageValidations: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("ChatServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in ChatServiceTest");
+        }
     }
 }

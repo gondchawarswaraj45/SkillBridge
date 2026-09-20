@@ -22,9 +22,6 @@ import com.freelancing.service.company.MilestoneService;
 
 import com.freelancing.config.SecurityConfig;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +53,6 @@ public class PaymentServiceTest {
     private Proposal proposal;
     private Contract contract;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         userDAO = new UserDAO();
@@ -69,7 +65,6 @@ public class PaymentServiceTest {
         transactionDAO = new TransactionDAO();
     }
 
-    @BeforeEach
     public void setup() {
         contractService = new ContractService();
         milestoneService = new MilestoneService();
@@ -135,7 +130,6 @@ public class PaymentServiceTest {
         contract = contractService.hireFreelancer(proposal.getId(), clientUser.getId(), null);
     }
 
-    @Test
     public void testProcessMilestonePaymentSuccess() throws IOException {
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
         Milestone m1 = milestones.get(0);
@@ -174,7 +168,6 @@ public class PaymentServiceTest {
         assertEquals(m1.getAmount(), dbCp.getTotalSpent(), 0.001);
     }
 
-    @Test
     public void testProcessMilestonePaymentUnauthorizedClientFails() {
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
         Milestone m1 = milestones.get(0);
@@ -185,7 +178,6 @@ public class PaymentServiceTest {
         });
     }
 
-    @Test
     public void testProcessMilestonePaymentAlreadyPaidFails() throws IOException {
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
         Milestone m1 = milestones.get(0);
@@ -204,7 +196,6 @@ public class PaymentServiceTest {
         });
     }
 
-    @Test
     public void testFreelancerEarningsAndWithdrawalSimulation() throws IOException {
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
         Milestone m1 = milestones.get(0);
@@ -234,7 +225,6 @@ public class PaymentServiceTest {
         assertEquals(m1.getAmount() - 400.0, updatedSummary.availableBalance, 0.001);
     }
 
-    @Test
     public void testWithdrawalExcessiveAmountFails() {
         assertThrows(IllegalArgumentException.class, () -> {
             // Freelancer has $0 balance initially, withdrawing $100 must fail
@@ -242,7 +232,6 @@ public class PaymentServiceTest {
         });
     }
 
-    @Test
     public void testContractAndProjectCompletionOnAllMilestonesPaid() throws IOException {
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
         File dummyFile = File.createTempFile("fin_all_", ".txt");
@@ -270,5 +259,86 @@ public class PaymentServiceTest {
         assertEquals(1, clientSummary.completedContractsCount);
         assertEquals(4500.0, clientSummary.totalSpent, 0.001);
         assertEquals(0.0, clientSummary.activeEscrowCommitted, 0.001);
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running PaymentServiceTest...");
+        int passed = 0;
+        int total = 6;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for PaymentServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            PaymentServiceTest test = new PaymentServiceTest();
+            test.setup();
+            test.testProcessMilestonePaymentSuccess();
+            passed++;
+            System.out.println("  [PASS] testProcessMilestonePaymentSuccess");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testProcessMilestonePaymentSuccess: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            PaymentServiceTest test = new PaymentServiceTest();
+            test.setup();
+            test.testProcessMilestonePaymentUnauthorizedClientFails();
+            passed++;
+            System.out.println("  [PASS] testProcessMilestonePaymentUnauthorizedClientFails");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testProcessMilestonePaymentUnauthorizedClientFails: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            PaymentServiceTest test = new PaymentServiceTest();
+            test.setup();
+            test.testProcessMilestonePaymentAlreadyPaidFails();
+            passed++;
+            System.out.println("  [PASS] testProcessMilestonePaymentAlreadyPaidFails");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testProcessMilestonePaymentAlreadyPaidFails: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            PaymentServiceTest test = new PaymentServiceTest();
+            test.setup();
+            test.testFreelancerEarningsAndWithdrawalSimulation();
+            passed++;
+            System.out.println("  [PASS] testFreelancerEarningsAndWithdrawalSimulation");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testFreelancerEarningsAndWithdrawalSimulation: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            PaymentServiceTest test = new PaymentServiceTest();
+            test.setup();
+            test.testWithdrawalExcessiveAmountFails();
+            passed++;
+            System.out.println("  [PASS] testWithdrawalExcessiveAmountFails");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testWithdrawalExcessiveAmountFails: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            PaymentServiceTest test = new PaymentServiceTest();
+            test.setup();
+            test.testContractAndProjectCompletionOnAllMilestonesPaid();
+            passed++;
+            System.out.println("  [PASS] testContractAndProjectCompletionOnAllMilestonesPaid");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testContractAndProjectCompletionOnAllMilestonesPaid: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("PaymentServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in PaymentServiceTest");
+        }
     }
 }

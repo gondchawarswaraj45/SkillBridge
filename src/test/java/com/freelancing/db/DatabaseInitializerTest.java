@@ -1,8 +1,5 @@
 package com.freelancing.db;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.sql.Connection;
@@ -26,21 +23,16 @@ public class DatabaseInitializerTest {
         "disputes", "transactions", "audit_logs"
     };
 
-    @BeforeAll
     public static void setUp() {
         DatabaseInitializer.initialize();
     }
 
-    @Test
-    @DisplayName("Verify SQLite DB file exists in data directory")
     public void testDatabaseFileExists() {
         File dbFile = new File(DatabaseConnection.DB_DIR, DatabaseConnection.DB_NAME);
         assertTrue(dbFile.exists(), "Database file data/skillbridge.db should exist");
         assertTrue(dbFile.length() > 0, "Database file should not be empty");
     }
 
-    @Test
-    @DisplayName("Verify all 27 SkillBridge tables are created")
     public void testAll27TablesExist() throws SQLException {
         Set<String> actualTables = new HashSet<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -57,8 +49,6 @@ public class DatabaseInitializerTest {
         }
     }
 
-    @Test
-    @DisplayName("Verify PRAGMA foreign_keys is enabled")
     public void testForeignKeysEnabled() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -68,8 +58,6 @@ public class DatabaseInitializerTest {
         }
     }
 
-    @Test
-    @DisplayName("Verify foreign key constraints are strictly enforced")
     public void testForeignKeyConstraintEnforcement() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(
@@ -82,8 +70,6 @@ public class DatabaseInitializerTest {
         }
     }
 
-    @Test
-    @DisplayName("Verify initial seed data is populated")
     public void testSeedDataPopulated() throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
@@ -120,6 +106,72 @@ public class DatabaseInitializerTest {
                 assertNotEquals("admin123", pass, "Password must be hashed, never plaintext");
                 assertEquals(64, pass.length(), "SHA-256 hex string should be 64 characters");
             }
+        }
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running DatabaseInitializerTest...");
+        int passed = 0;
+        int total = 5;
+        try {
+            setUp();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for DatabaseInitializerTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            DatabaseInitializerTest test = new DatabaseInitializerTest();
+            test.testDatabaseFileExists();
+            passed++;
+            System.out.println("  [PASS] testDatabaseFileExists");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testDatabaseFileExists: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            DatabaseInitializerTest test = new DatabaseInitializerTest();
+            test.testAll27TablesExist();
+            passed++;
+            System.out.println("  [PASS] testAll27TablesExist");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAll27TablesExist: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            DatabaseInitializerTest test = new DatabaseInitializerTest();
+            test.testForeignKeysEnabled();
+            passed++;
+            System.out.println("  [PASS] testForeignKeysEnabled");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testForeignKeysEnabled: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            DatabaseInitializerTest test = new DatabaseInitializerTest();
+            test.testForeignKeyConstraintEnforcement();
+            passed++;
+            System.out.println("  [PASS] testForeignKeyConstraintEnforcement");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testForeignKeyConstraintEnforcement: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            DatabaseInitializerTest test = new DatabaseInitializerTest();
+            test.testSeedDataPopulated();
+            passed++;
+            System.out.println("  [PASS] testSeedDataPopulated");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSeedDataPopulated: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("DatabaseInitializerTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in DatabaseInitializerTest");
         }
     }
 }

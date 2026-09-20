@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -20,6 +21,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.InputStream;
 
@@ -63,9 +65,11 @@ public class HomePage extends Application {
         return instance;
     }
 
-    @Override
     public void start(Stage stage) {
         primaryStage = stage;
+        try {
+            primaryStage.initStyle(StageStyle.UNDECORATED);
+        } catch (Exception ignored) {}
         primaryStage.setTitle("SkillBridge - Freelancing & Skill Exchange Platform");
 
         Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
@@ -82,23 +86,17 @@ public class HomePage extends Application {
 
         com.freelancing.app.NavigationManager.getInstance().setPrimaryStage(primaryStage);
 
-        // Smooth quick splash screen into clean home
-        SplashScreen splash = new SplashScreen(HomePage::showHomeView);
-        Scene splashScene = new Scene(splash, initialWidth, initialHeight);
-        com.freelancing.app.NavigationManager.getInstance().setPrimaryScene(splashScene);
-        setScene(splashScene);
-
+        showHomeView();
         primaryStage.show();
     }
 
-    @Override
     public void stop() {
         // Clean shutdown without background threads hanging
     }
 
     public static void setScene(Scene scene) {
-        if (primaryStage != null) {
-            primaryStage.setScene(scene);
+        if (scene != null) {
+            com.freelancing.app.NavigationManager.getInstance().setScene(scene);
         }
     }
 
@@ -166,7 +164,7 @@ public class HomePage extends Application {
     // CLEAN & PROFESSIONAL HOMEPAGE SCENE
     // =========================================================================
 
-    public Scene createHomeScene() {
+    public Parent createHomeView() {
         BorderPane layout = new BorderPane();
         layout.setStyle(AppTheme.getRootStyle());
 
@@ -178,6 +176,8 @@ public class HomePage extends Application {
         mainScrollPane = new ScrollPane();
         UIComponents.styleScrollPane(mainScrollPane);
         mainScrollPane.setFitToWidth(true);
+        mainScrollPane.setFitToHeight(false);
+        mainScrollPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
         mainContentBox = new VBox(45);
         mainContentBox.setPadding(new Insets(35, 60, 60, 60));
@@ -214,8 +214,13 @@ public class HomePage extends Application {
 
         mainScrollPane.setContent(contentWrapper);
         layout.setCenter(mainScrollPane);
-        com.freelancing.util.AnimationUtil.applyFadeZoom(mainContentBox, 350);
+        mainContentBox.setOpacity(1.0);
 
+        return layout;
+    }
+
+    public Scene createHomeScene() {
+        Parent layout = createHomeView();
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
         double sceneWidth = Math.min(1360, bounds.getWidth() * 0.92);
         double sceneHeight = Math.min(880, bounds.getHeight() * 0.92);
@@ -239,8 +244,8 @@ public class HomePage extends Application {
         // Left: Brand Logo
         Label logo = new Label("⚡ SkillBridge");
         logo.setFont(Font.font("Segoe UI", FontWeight.BLACK, 23));
-        logo.setTextFill(Color.web(AppTheme.COLOR_PRIMARY));
-        logo.setStyle("-fx-cursor: hand;");
+        logo.setTextFill(Color.web("#FFFFFF"));
+        logo.setStyle("-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 4, 0, 0, 1);");
         logo.setOnMouseClicked(e -> {
             if (mainScrollPane != null) {
                 mainScrollPane.setVvalue(0.0);
@@ -248,8 +253,8 @@ public class HomePage extends Application {
         });
 
         Label logoTagline = new Label("Freelance & Engineering Network");
-        logoTagline.setFont(Font.font("Segoe UI", 12));
-        logoTagline.setTextFill(Color.web(AppTheme.getTextMuted()));
+        logoTagline.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        logoTagline.setTextFill(Color.web("#DBEAFE"));
 
         HBox logoBox = new HBox(12, logo, logoTagline);
         logoBox.setAlignment(Pos.CENTER_LEFT);
@@ -299,9 +304,9 @@ public class HomePage extends Application {
 
     private Button createNavTextButton(String text, Runnable action) {
         Button btn = new Button(text);
-        btn.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
-        String base = "-fx-background-color: transparent; -fx-text-fill: " + AppTheme.getTextPrimary() + "; -fx-cursor: hand; -fx-padding: 8 14; -fx-background-radius: 6;";
-        String hover = "-fx-background-color: rgba(99, 102, 241, 0.12); -fx-text-fill: " + AppTheme.COLOR_PRIMARY + "; -fx-cursor: hand; -fx-padding: 8 14; -fx-background-radius: 6;";
+        btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        String base = "-fx-background-color: transparent; -fx-text-fill: #FFFFFF; -fx-cursor: hand; -fx-padding: 8 14; -fx-background-radius: 6;";
+        String hover = "-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-cursor: hand; -fx-padding: 8 14; -fx-background-radius: 6;";
         btn.setStyle(base);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(base));
@@ -312,8 +317,8 @@ public class HomePage extends Application {
     private Button createNavOutlineButton(String text, Runnable action) {
         Button btn = new Button(text);
         btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-        String base = "-fx-background-color: transparent; -fx-border-color: " + AppTheme.COLOR_PRIMARY + "; -fx-border-width: 1.5; -fx-border-radius: 7; -fx-text-fill: " + AppTheme.COLOR_PRIMARY + "; -fx-cursor: hand; -fx-padding: 7 16; -fx-background-radius: 7;";
-        String hover = "-fx-background-color: " + AppTheme.COLOR_PRIMARY + "; -fx-border-color: " + AppTheme.COLOR_PRIMARY + "; -fx-border-width: 1.5; -fx-border-radius: 7; -fx-text-fill: #ffffff; -fx-cursor: hand; -fx-padding: 7 16; -fx-background-radius: 7;";
+        String base = "-fx-background-color: rgba(255, 255, 255, 0.12); -fx-border-color: rgba(255, 255, 255, 0.7); -fx-border-width: 1.5; -fx-border-radius: 7; -fx-text-fill: #FFFFFF; -fx-cursor: hand; -fx-padding: 7 16; -fx-background-radius: 7;";
+        String hover = "-fx-background-color: #FFFFFF; -fx-border-color: #FFFFFF; -fx-border-width: 1.5; -fx-border-radius: 7; -fx-text-fill: #1D4ED8; -fx-cursor: hand; -fx-padding: 7 16; -fx-background-radius: 7; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 2);";
         btn.setStyle(base);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(base));
@@ -324,8 +329,8 @@ public class HomePage extends Application {
     private Button createNavPrimaryButton(String text, Runnable action) {
         Button btn = new Button(text);
         btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-        String base = "-fx-background-color: " + AppTheme.COLOR_PRIMARY + "; -fx-text-fill: #ffffff; -fx-cursor: hand; -fx-padding: 8 18; -fx-background-radius: 7; -fx-font-weight: bold;";
-        String hover = "-fx-background-color: " + AppTheme.COLOR_PRIMARY_HOVER + "; -fx-text-fill: #ffffff; -fx-cursor: hand; -fx-padding: 8 18; -fx-background-radius: 7; -fx-font-weight: bold;";
+        String base = "-fx-background-color: #FFFFFF; -fx-text-fill: #1D4ED8; -fx-cursor: hand; -fx-padding: 8 18; -fx-background-radius: 7; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 2);";
+        String hover = "-fx-background-color: #DBEAFE; -fx-text-fill: #1E40AF; -fx-cursor: hand; -fx-padding: 8 18; -fx-background-radius: 7; -fx-font-weight: bold;";
         btn.setStyle(base);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(base));
@@ -336,14 +341,13 @@ public class HomePage extends Application {
     private Button createNavAdminButton(String text, Runnable action) {
         Button btn = new Button(text);
         btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-        boolean dark = AppTheme.isDarkMode();
-        String bg = dark ? "rgba(239, 68, 68, 0.16)" : "#FEE2E2";
-        String border = dark ? "rgba(239, 68, 68, 0.5)" : "#FCA5A5";
-        String textCol = dark ? "#F87171" : "#DC2626";
-        String hoverBg = dark ? "rgba(239, 68, 68, 0.28)" : "#FECACA";
+        String bg = "rgba(239, 68, 68, 0.28)";
+        String border = "#FCA5A5";
+        String textCol = "#FFFFFF";
+        String hoverBg = "rgba(239, 68, 68, 0.5)";
 
         String base = "-fx-background-color: " + bg + "; -fx-border-color: " + border + "; -fx-border-width: 1.2; -fx-border-radius: 7; -fx-text-fill: " + textCol + "; -fx-cursor: hand; -fx-padding: 7 14; -fx-background-radius: 7;";
-        String hover = "-fx-background-color: " + hoverBg + "; -fx-border-color: " + border + "; -fx-border-width: 1.2; -fx-border-radius: 7; -fx-text-fill: " + textCol + "; -fx-cursor: hand; -fx-padding: 7 14; -fx-background-radius: 7;";
+        String hover = "-fx-background-color: " + hoverBg + "; -fx-border-color: #FFFFFF; -fx-border-width: 1.2; -fx-border-radius: 7; -fx-text-fill: " + textCol + "; -fx-cursor: hand; -fx-padding: 7 14; -fx-background-radius: 7; -fx-effect: dropshadow(gaussian, rgba(239,68,68,0.4), 6, 0, 0, 2);";
         btn.setStyle(base);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(base));

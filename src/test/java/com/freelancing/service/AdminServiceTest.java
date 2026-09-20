@@ -8,8 +8,6 @@ import com.freelancing.service.admin.AdminService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +24,6 @@ public class AdminServiceTest {
 
     private static AdminService adminService;
 
-    @BeforeAll
     public static void setupDatabase() throws Exception {
         DatabaseInitializer.initialize();
         adminService = new AdminService();
@@ -40,7 +37,6 @@ public class AdminServiceTest {
         }
     }
 
-    @Test
     public void testPlatformKpis() {
         Map<String, Object> kpis = adminService.getPlatformKpis();
         assertNotNull(kpis);
@@ -50,7 +46,6 @@ public class AdminServiceTest {
         assertNotNull(kpis.get("projectsByCategory"));
     }
 
-    @Test
     public void testUserSearchAndStatusToggleWithAuditLog() {
         String testUserId = "usr_test_" + UUID.randomUUID().toString().substring(0, 8);
         try (Connection conn = DatabaseConnection.getConnection();
@@ -86,7 +81,6 @@ public class AdminServiceTest {
         assertTrue(restored);
     }
 
-    @Test
     public void testDisputeLifecycleAndResolution() {
         Dispute created = adminService.raiseDispute("ctr_adm_test", "usr_client1", "Milestone scope disagreement", "Details of disagreement");
         assertNotNull(created);
@@ -103,7 +97,6 @@ public class AdminServiceTest {
         assertTrue(found.getResolution().contains("Arbitration settlement"));
     }
 
-    @Test
     public void testSupportTicketLifecycle() {
         SupportTicket ticket = adminService.createSupportTicket("usr_free1", "Payout Delay Issue", "I requested a payout 3 days ago", "HIGH");
         assertNotNull(ticket);
@@ -119,7 +112,6 @@ public class AdminServiceTest {
         assertTrue(openTickets.stream().anyMatch(t -> t.getId().equals(ticket.getId())));
     }
 
-    @Test
     public void testDatabaseBackup() throws IOException {
         File tempDir = Files.createTempDirectory("skillbridge_backup_test").toFile();
         tempDir.deleteOnExit();
@@ -134,7 +126,6 @@ public class AdminServiceTest {
         tempDir.delete();
     }
 
-    @Test
     public void testCsvDataExport() throws Exception {
         File tempDir = Files.createTempDirectory("skillbridge_csv_test").toFile();
         tempDir.deleteOnExit();
@@ -154,7 +145,6 @@ public class AdminServiceTest {
         tempDir.delete();
     }
 
-    @Test
     public void testAuditLogCustomEvent() {
         AuditLog logged = adminService.logAuditEvent("usr_admin", "CONFIG_CHANGE", "Updated platform commission rate to 10%", "192.168.1.1");
         assertNotNull(logged);
@@ -162,5 +152,89 @@ public class AdminServiceTest {
 
         List<AuditLog> logs = adminService.getAuditLogs(10);
         assertTrue(logs.stream().anyMatch(l -> l.getId().equals(logged.getId())));
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running AdminServiceTest...");
+        int passed = 0;
+        int total = 7;
+        try {
+            setupDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for AdminServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testPlatformKpis();
+            passed++;
+            System.out.println("  [PASS] testPlatformKpis");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testPlatformKpis: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testUserSearchAndStatusToggleWithAuditLog();
+            passed++;
+            System.out.println("  [PASS] testUserSearchAndStatusToggleWithAuditLog");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testUserSearchAndStatusToggleWithAuditLog: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testDisputeLifecycleAndResolution();
+            passed++;
+            System.out.println("  [PASS] testDisputeLifecycleAndResolution");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testDisputeLifecycleAndResolution: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testSupportTicketLifecycle();
+            passed++;
+            System.out.println("  [PASS] testSupportTicketLifecycle");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSupportTicketLifecycle: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testDatabaseBackup();
+            passed++;
+            System.out.println("  [PASS] testDatabaseBackup");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testDatabaseBackup: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testCsvDataExport();
+            passed++;
+            System.out.println("  [PASS] testCsvDataExport");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCsvDataExport: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AdminServiceTest test = new AdminServiceTest();
+            test.testAuditLogCustomEvent();
+            passed++;
+            System.out.println("  [PASS] testAuditLogCustomEvent");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAuditLogCustomEvent: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("AdminServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in AdminServiceTest");
+        }
     }
 }

@@ -21,6 +21,7 @@ C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\model\
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\service\company\ProposalService.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\dao\company\MilestoneDAO.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\service\common\CalendarService.java
+C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\ui\common\WindowResizeHelper.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\model\common\Skill.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\service\common\PaymentService.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\app\NavigationManager.java
@@ -37,6 +38,7 @@ C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\model\
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\model\freelancer\PortfolioItem.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\db\DatabaseConnection.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\dao\common\SkillDAO.java
+C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\ui\common\AppTitleBar.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\dao\common\TransactionDAO.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\model\company\ClientProfile.java
 C:\Users\Swaraj\Desktop\Work\freelancing.sb\src\main\java\com\freelancing\util\ValidationUtil.java

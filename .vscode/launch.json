@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "SkillBridge - Run Main",
+            "request": "launch",
+            "mainClass": "com.freelancing.app.Main",
+            "projectName": "freelancing-sb",
+            "vmArgs": "--module-path \"${workspaceFolder}/lib/deps\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.web,javafx.media,javafx.swing"
+        }
+    ]
+}

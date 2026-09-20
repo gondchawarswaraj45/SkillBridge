@@ -7,9 +7,6 @@ import com.freelancing.service.common.AuthService;
 import com.freelancing.app.SessionManager;
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,15 +21,12 @@ public class AuthServiceTest {
     private static AuthService authService;
     private static UserDAO userDAO;
 
-    @BeforeAll
     public static void setUp() {
         DatabaseInitializer.initialize();
         userDAO = new UserDAO();
         authService = new AuthService(userDAO);
     }
 
-    @Test
-    @DisplayName("Verify seed Admin authentication with salted hash")
     public void testAdminLoginSuccess() {
         User admin = authService.login("admin", "admin123");
         assertNotNull(admin, "Admin should log in successfully");
@@ -41,8 +35,6 @@ public class AuthServiceTest {
         assertTrue(admin.isAdmin());
     }
 
-    @Test
-    @DisplayName("Verify seed Freelancer authentication with username or email")
     public void testFreelancerLoginSuccess() {
         // Via username
         User freelancer = authService.login("alex_dev", "free123");
@@ -56,8 +48,6 @@ public class AuthServiceTest {
         assertEquals(freelancer.getId(), freelancerByEmail.getId());
     }
 
-    @Test
-    @DisplayName("Verify seed Client authentication")
     public void testClientLoginSuccess() {
         User client = authService.login("sarah_client", "client123");
         assertNotNull(client, "Client should log in successfully");
@@ -65,8 +55,6 @@ public class AuthServiceTest {
         assertTrue(client.isClient());
     }
 
-    @Test
-    @DisplayName("Verify login rejection with incorrect credentials")
     public void testLoginFailure() {
         User wrongPassword = authService.login("alex_dev", "incorrect_pwd");
         assertNull(wrongPassword, "Login should fail with wrong password");
@@ -75,8 +63,6 @@ public class AuthServiceTest {
         assertNull(nonExistent, "Login should fail for non-existent user");
     }
 
-    @Test
-    @DisplayName("Verify username and email availability checks")
     public void testAvailabilityChecks() {
         assertFalse(authService.isUsernameAvailable("admin"), "admin username should not be available");
         assertFalse(authService.isEmailAvailable("admin@skillbridge.com"), "admin email should not be available");
@@ -85,8 +71,6 @@ public class AuthServiceTest {
         assertTrue(authService.isEmailAvailable("new_dev_user_2026@domain.test"), "New email should be available");
     }
 
-    @Test
-    @DisplayName("Verify new Freelancer registration and automatic SQLite profile initialization")
     public void testRegisterNewFreelancer() throws SQLException {
         String testUser = "dev_marcus_" + System.currentTimeMillis();
         String testEmail = testUser + "@skillbridge.test";
@@ -118,8 +102,6 @@ public class AuthServiceTest {
         assertEquals(registered.getId(), authenticated.getId());
     }
 
-    @Test
-    @DisplayName("Verify SessionManager desktop state and reactive listeners")
     public void testSessionManager() {
         SessionManager session = SessionManager.getInstance();
         session.logout();
@@ -145,5 +127,89 @@ public class AuthServiceTest {
         session.logout();
         assertFalse(session.isLoggedIn());
         assertNull(session.getCurrentUser());
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running AuthServiceTest...");
+        int passed = 0;
+        int total = 7;
+        try {
+            setUp();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for AuthServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testAdminLoginSuccess();
+            passed++;
+            System.out.println("  [PASS] testAdminLoginSuccess");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAdminLoginSuccess: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testFreelancerLoginSuccess();
+            passed++;
+            System.out.println("  [PASS] testFreelancerLoginSuccess");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testFreelancerLoginSuccess: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testClientLoginSuccess();
+            passed++;
+            System.out.println("  [PASS] testClientLoginSuccess");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testClientLoginSuccess: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testLoginFailure();
+            passed++;
+            System.out.println("  [PASS] testLoginFailure");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testLoginFailure: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testAvailabilityChecks();
+            passed++;
+            System.out.println("  [PASS] testAvailabilityChecks");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAvailabilityChecks: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testRegisterNewFreelancer();
+            passed++;
+            System.out.println("  [PASS] testRegisterNewFreelancer");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testRegisterNewFreelancer: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            AuthServiceTest test = new AuthServiceTest();
+            test.testSessionManager();
+            passed++;
+            System.out.println("  [PASS] testSessionManager");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSessionManager: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("AuthServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in AuthServiceTest");
+        }
     }
 }

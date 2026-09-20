@@ -8,9 +8,6 @@ import com.freelancing.service.common.NotificationService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,14 +26,12 @@ public class CalendarServiceTest {
     private String projectId;
     private String contractId;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         calendarService = new CalendarService();
         notificationService = new NotificationService();
     }
 
-    @BeforeEach
     public void setUp() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         hostUser = new User();
@@ -114,7 +109,6 @@ public class CalendarServiceTest {
         }
     }
 
-    @Test
     public void testCreateAndQueryCalendarEvents() {
         CalendarEvent ev = calendarService.createCalendarEvent(
                 hostUser.getId(),
@@ -143,7 +137,6 @@ public class CalendarServiceTest {
         assertEquals(1, monthEvents.size());
     }
 
-    @Test
     public void testCreateMeetingEventBothCalendarsAndNotification() {
         CalendarEvent meeting = calendarService.createMeetingEvent(
                 hostUser.getId(),
@@ -174,7 +167,6 @@ public class CalendarServiceTest {
         assertTrue(attendeeNotifs.get(0).getMessage().contains("https://meet.google.com/sb-demo-123"));
     }
 
-    @Test
     public void testCreateFromContractMilestone() {
         calendarService.createFromContractMilestone(
                 hostUser.getId(),
@@ -191,5 +183,56 @@ public class CalendarServiceTest {
         List<CalendarEvent> freelancerEvents = calendarService.getCalendarEventsForDate(attendeeUser.getId(), "2026-11-01");
         assertEquals(1, freelancerEvents.size());
         assertEquals(CalendarEvent.EventType.MILESTONE, freelancerEvents.get(0).getType());
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running CalendarServiceTest...");
+        int passed = 0;
+        int total = 3;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for CalendarServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            CalendarServiceTest test = new CalendarServiceTest();
+            test.setUp();
+            test.testCreateAndQueryCalendarEvents();
+            passed++;
+            System.out.println("  [PASS] testCreateAndQueryCalendarEvents");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCreateAndQueryCalendarEvents: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            CalendarServiceTest test = new CalendarServiceTest();
+            test.setUp();
+            test.testCreateMeetingEventBothCalendarsAndNotification();
+            passed++;
+            System.out.println("  [PASS] testCreateMeetingEventBothCalendarsAndNotification");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCreateMeetingEventBothCalendarsAndNotification: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            CalendarServiceTest test = new CalendarServiceTest();
+            test.setUp();
+            test.testCreateFromContractMilestone();
+            passed++;
+            System.out.println("  [PASS] testCreateFromContractMilestone");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCreateFromContractMilestone: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("CalendarServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in CalendarServiceTest");
+        }
     }
 }

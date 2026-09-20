@@ -42,6 +42,7 @@ import com.freelancing.util.AnimationUtil;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
@@ -95,7 +96,7 @@ public class FreelancerMainView {
         this(user);
     }
 
-    public Scene createScene() {
+    public Parent createContent() {
         root = new BorderPane();
         root.setStyle("-fx-background-color: " + AppTheme.getBgDark() + ";");
 
@@ -103,34 +104,36 @@ public class FreelancerMainView {
         HBox header = new HBox(15);
         header.setPadding(new Insets(12, 24, 12, 24));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color: " + AppTheme.getBgPanel() + ";" +
-                        "-fx-border-color: " + AppTheme.getBorderColor() + ";" +
-                        "-fx-border-width: 0 0 1 0;");
+        header.setStyle(AppTheme.getTitleBarStyle());
 
         Button btnToggleSidebar = new Button("☰");
         btnToggleSidebar.setTooltip(new Tooltip("Toggle / Close Sidebar"));
         btnToggleSidebar.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        btnToggleSidebar.setStyle("-fx-background-color: " + AppTheme.getBgCard() + "; -fx-text-fill: " + AppTheme.COLOR_PRIMARY + "; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: " + AppTheme.getBorderColor() + "; -fx-border-radius: 6;");
+        btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6;");
+        btnToggleSidebar.setOnMouseEntered(e -> btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.32); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: #FFFFFF; -fx-border-radius: 6;"));
+        btnToggleSidebar.setOnMouseExited(e -> btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6;"));
 
         Label logo = new Label("⚡ SkillBridge  |  Freelancer Portal");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
-        logo.setTextFill(Color.web(AppTheme.COLOR_PRIMARY));
+        logo.setTextFill(Color.web("#FFFFFF"));
+        logo.setStyle("-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 4, 0, 0, 1);");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnHome = UIComponents.createSecondaryButton("🏠 SkillBridge Home");
-        btnHome.setOnAction(e -> HomePage.showHomeView());
+        Button btnHome = UIComponents.createTitleBarButton("🏠 SkillBridge Home", () -> HomePage.showHomeView());
 
         Button btnTheme = UIComponents.createThemeToggle(() -> {
             HomePage.showFreelancerView(currentUser);
         });
 
         Label userLabel = new Label("👤 " + currentUser.getUsername() + " (Verified Freelancer)");
-        userLabel.setTextFill(Color.web(AppTheme.getTextPrimary()));
+        userLabel.setTextFill(Color.web("#FFFFFF"));
         userLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        userLabel.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-padding: 6 14; -fx-background-radius: 20; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);");
 
         Button btnLogout = UIComponents.createDangerButton("Logout");
+        btnLogout.setStyle("-fx-background-color: #DC2626; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-border-color: #EF4444; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14; -fx-cursor: hand;");
         btnLogout.setOnAction(e -> {
             HomePage.showLoginView();
         });
@@ -218,10 +221,15 @@ public class FreelancerMainView {
         });
 
         showDashboard();
+        return root;
+    }
+
+    public Scene createScene() {
+        Parent content = createContent();
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
         double sceneWidth = Math.min(1360, bounds.getWidth() * 0.94);
         double sceneHeight = Math.min(880, bounds.getHeight() * 0.94);
-        Scene scene = new Scene(root, sceneWidth, sceneHeight);
+        Scene scene = new Scene(content, sceneWidth, sceneHeight);
         AppTheme.applyAppStylesheet(scene);
         return scene;
     }
@@ -276,6 +284,22 @@ public class FreelancerMainView {
         });
     }
 
+    private static class FreelancerDashboardData {
+        final double rating;
+        final int completed;
+        final double earnedVal;
+        final String earnedStr;
+        final List<Object[]> matchedProjects;
+
+        FreelancerDashboardData(double rating, int completed, double earnedVal, String earnedStr, List<Object[]> matchedProjects) {
+            this.rating = rating;
+            this.completed = completed;
+            this.earnedVal = earnedVal;
+            this.earnedStr = earnedStr;
+            this.matchedProjects = matchedProjects;
+        }
+    }
+
     // 1. Dashboard View with JavaFX Charts (Multithreaded background data loading)
     private void showDashboard() {
         contentArea.getChildren().setAll(AnimationUtil.createLoadingOverlay("Loading your freelancer dashboard & analytics..."));
@@ -306,15 +330,14 @@ public class FreelancerMainView {
                     matchedProjects.add(new Object[] { p, matchScore });
                 }
 
-                return new Object[] { rating, completed, earnedVal, earnedStr, matchedProjects };
+                return new FreelancerDashboardData(rating, completed, earnedVal, earnedStr, matchedProjects);
             },
             data -> {
-                double rating = (double) data[0];
-                int completed = (int) data[1];
-                double earnedVal = (double) data[2];
-                String earnedStr = (String) data[3];
-                @SuppressWarnings("unchecked")
-                List<Object[]> matchedProjects = (List<Object[]>) data[4];
+                double rating = data.rating;
+                int completed = data.completed;
+                double earnedVal = data.earnedVal;
+                String earnedStr = data.earnedStr;
+                List<Object[]> matchedProjects = data.matchedProjects;
 
                 VBox box = new VBox(20);
                 Label title = UIComponents.createTitle("Freelancer Dashboard & Analytics");

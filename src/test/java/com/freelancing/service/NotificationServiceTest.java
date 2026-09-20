@@ -6,9 +6,6 @@ import com.freelancing.service.common.NotificationService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -22,13 +19,11 @@ public class NotificationServiceTest {
     private static NotificationService notificationService;
     private User testUser;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         notificationService = new NotificationService();
     }
 
-    @BeforeEach
     public void setUp() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         testUser = new User();
@@ -50,7 +45,6 @@ public class NotificationServiceTest {
         }
     }
 
-    @Test
     public void testSendAndRetrieveNotifications() {
         notificationService.sendNotification(testUser.getId(), "Proposal Accepted", "Your proposal for Project X was accepted!", "PROPOSAL", "ref_123");
 
@@ -65,7 +59,6 @@ public class NotificationServiceTest {
         assertFalse(n.isRead());
     }
 
-    @Test
     public void testUnreadCountAndMarkAsRead() {
         notificationService.sendNotification(testUser.getId(), "Alert 1", "Message 1");
         notificationService.sendNotification(testUser.getId(), "Alert 2", "Message 2");
@@ -78,7 +71,6 @@ public class NotificationServiceTest {
         assertEquals(1, notificationService.getUnreadCount(testUser.getId()));
     }
 
-    @Test
     public void testMarkAllAsRead() {
         notificationService.sendNotification(testUser.getId(), "Alert A", "Msg A");
         notificationService.sendNotification(testUser.getId(), "Alert B", "Msg B");
@@ -88,5 +80,56 @@ public class NotificationServiceTest {
 
         assertTrue(notificationService.markAllAsRead(testUser.getId()));
         assertEquals(0, notificationService.getUnreadCount(testUser.getId()));
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running NotificationServiceTest...");
+        int passed = 0;
+        int total = 3;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for NotificationServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            NotificationServiceTest test = new NotificationServiceTest();
+            test.setUp();
+            test.testSendAndRetrieveNotifications();
+            passed++;
+            System.out.println("  [PASS] testSendAndRetrieveNotifications");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSendAndRetrieveNotifications: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NotificationServiceTest test = new NotificationServiceTest();
+            test.setUp();
+            test.testUnreadCountAndMarkAsRead();
+            passed++;
+            System.out.println("  [PASS] testUnreadCountAndMarkAsRead");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testUnreadCountAndMarkAsRead: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NotificationServiceTest test = new NotificationServiceTest();
+            test.setUp();
+            test.testMarkAllAsRead();
+            passed++;
+            System.out.println("  [PASS] testMarkAllAsRead");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testMarkAllAsRead: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("NotificationServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in NotificationServiceTest");
+        }
     }
 }

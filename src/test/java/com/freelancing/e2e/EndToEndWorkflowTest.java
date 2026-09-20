@@ -44,9 +44,6 @@ import com.freelancing.service.freelancer.MatchingService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -85,7 +82,6 @@ public class EndToEndWorkflowTest {
     private static MilestoneDAO milestoneDAO;
     private static TransactionDAO transactionDAO;
 
-    @BeforeAll
     public static void setUp() {
         DatabaseInitializer.initialize();
 
@@ -113,8 +109,6 @@ public class EndToEndWorkflowTest {
         notificationService = new NotificationService();
     }
 
-    @Test
-    @DisplayName("Complete End-to-End SkillBridge Lifecycle: Register -> Post -> Bid -> Hire -> Deliver -> Approve -> Pay -> Review")
     public void testCompleteSkillBridgeLifecycle() throws Exception {
         String uid = UUID.randomUUID().toString().substring(0, 6);
 
@@ -439,6 +433,36 @@ public class EndToEndWorkflowTest {
             assertTrue(tableCount >= 27, "All 27 SQLite tables must remain active");
         } catch (Exception e) {
             fail("Database integrity check failed: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running EndToEndWorkflowTest...");
+        int passed = 0;
+        int total = 1;
+        try {
+            setUp();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for EndToEndWorkflowTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            EndToEndWorkflowTest test = new EndToEndWorkflowTest();
+            test.testCompleteSkillBridgeLifecycle();
+            passed++;
+            System.out.println("  [PASS] testCompleteSkillBridgeLifecycle");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCompleteSkillBridgeLifecycle: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("EndToEndWorkflowTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in EndToEndWorkflowTest");
         }
     }
 }

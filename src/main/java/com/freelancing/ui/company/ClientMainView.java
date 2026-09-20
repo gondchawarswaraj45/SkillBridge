@@ -36,6 +36,7 @@ import com.freelancing.util.AnimationUtil;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
@@ -85,7 +86,7 @@ public class ClientMainView {
         this(user);
     }
 
-    public Scene createScene() {
+    public Parent createContent() {
         root = new BorderPane();
         root.setStyle("-fx-background-color: " + AppTheme.getBgDark() + ";");
 
@@ -93,34 +94,36 @@ public class ClientMainView {
         HBox header = new HBox(15);
         header.setPadding(new Insets(12, 24, 12, 24));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color: " + AppTheme.getBgPanel() + ";" +
-                "-fx-border-color: " + AppTheme.getBorderColor() + ";" +
-                "-fx-border-width: 0 0 1 0;");
+        header.setStyle(AppTheme.getTitleBarStyle());
 
         Button btnToggleSidebar = new Button("☰");
         btnToggleSidebar.setTooltip(new Tooltip("Toggle / Close Sidebar"));
         btnToggleSidebar.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        btnToggleSidebar.setStyle("-fx-background-color: " + AppTheme.getBgCard() + "; -fx-text-fill: " + AppTheme.COLOR_PRIMARY + "; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: " + AppTheme.getBorderColor() + "; -fx-border-radius: 6;");
+        btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6;");
+        btnToggleSidebar.setOnMouseEntered(e -> btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.32); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: #FFFFFF; -fx-border-radius: 6;"));
+        btnToggleSidebar.setOnMouseExited(e -> btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6;"));
 
         Label logo = new Label("⚡ SkillBridge  |  Client Portal");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
-        logo.setTextFill(Color.web(AppTheme.COLOR_PRIMARY));
+        logo.setTextFill(Color.web("#FFFFFF"));
+        logo.setStyle("-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 4, 0, 0, 1);");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnHome = UIComponents.createSecondaryButton("🏠 SkillBridge Home");
-        btnHome.setOnAction(e -> HomePage.showHomeView());
+        Button btnHome = UIComponents.createTitleBarButton("🏠 SkillBridge Home", () -> HomePage.showHomeView());
 
         Button btnTheme = UIComponents.createThemeToggle(() -> {
             HomePage.showClientView(currentUser);
         });
 
         Label userLabel = new Label("🏢 " + currentUser.getUsername() + " (Verified Client)");
-        userLabel.setTextFill(Color.web(AppTheme.getTextPrimary()));
+        userLabel.setTextFill(Color.web("#FFFFFF"));
         userLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        userLabel.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-padding: 6 14; -fx-background-radius: 20; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);");
 
         Button btnLogout = UIComponents.createDangerButton("Logout");
+        btnLogout.setStyle("-fx-background-color: #DC2626; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-border-color: #EF4444; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14; -fx-cursor: hand;");
         btnLogout.setOnAction(e -> {
             HomePage.showLoginView();
         });
@@ -249,10 +252,15 @@ public class ClientMainView {
         });
 
         showDashboard();
+        return root;
+    }
+
+    public Scene createScene() {
+        Parent content = createContent();
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
         double sceneWidth = Math.min(1360, bounds.getWidth() * 0.94);
         double sceneHeight = Math.min(880, bounds.getHeight() * 0.94);
-        Scene scene = new Scene(root, sceneWidth, sceneHeight);
+        Scene scene = new Scene(content, sceneWidth, sceneHeight);
         AppTheme.applyAppStylesheet(scene);
         return scene;
     }

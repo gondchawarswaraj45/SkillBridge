@@ -9,10 +9,6 @@ import com.freelancing.model.company.Project;
 import com.freelancing.service.company.ProjectService;
 
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +25,6 @@ public class ProjectServiceTest {
 
     private static final String TEST_PROJECT_ID = "proj_test_junit_5";
 
-    @BeforeAll
     public static void setUp() {
         DatabaseInitializer.initialize();
         projectDAO = new ProjectDAO();
@@ -39,13 +34,10 @@ public class ProjectServiceTest {
         projectService = new ProjectService(projectDAO, projectSkillDAO, skillDAO, clientProfileDAO);
     }
 
-    @AfterEach
     public void tearDown() {
         projectDAO.delete(TEST_PROJECT_ID);
     }
 
-    @Test
-    @DisplayName("Verify Project creation with skills and client profile stats update")
     public void testCreateProjectWithSkills() {
         projectDAO.delete(TEST_PROJECT_ID);
 
@@ -91,8 +83,6 @@ public class ProjectServiceTest {
         assertEquals(countBefore + 1, clientAfter.getPostedProjects());
     }
 
-    @Test
-    @DisplayName("Verify Project Marketplace search, filtering, and sorting in SQLite")
     public void testMarketplaceSearchAndFilters() {
         // Keyword Search
         List<Project> searchResult = projectService.searchProjects("Financial", null, null, null, null, null, "OPEN", "NEWEST");
@@ -119,8 +109,6 @@ public class ProjectServiceTest {
         assertTrue(expResult.stream().anyMatch(p -> "EXPERT".equalsIgnoreCase(p.getExperienceLevel())));
     }
 
-    @Test
-    @DisplayName("Verify Project update and status lifecycle transitions")
     public void testProjectUpdateAndLifecycle() {
         projectDAO.delete(TEST_PROJECT_ID);
 
@@ -156,5 +144,56 @@ public class ProjectServiceTest {
 
         Project inProgress = projectService.getProject(TEST_PROJECT_ID);
         assertEquals(Project.Status.IN_PROGRESS, inProgress.getStatus());
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running ProjectServiceTest...");
+        int passed = 0;
+        int total = 3;
+        try {
+            setUp();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for ProjectServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            ProjectServiceTest test = new ProjectServiceTest();
+            test.testCreateProjectWithSkills();
+            test.tearDown();
+            passed++;
+            System.out.println("  [PASS] testCreateProjectWithSkills");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCreateProjectWithSkills: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProjectServiceTest test = new ProjectServiceTest();
+            test.testMarketplaceSearchAndFilters();
+            test.tearDown();
+            passed++;
+            System.out.println("  [PASS] testMarketplaceSearchAndFilters");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testMarketplaceSearchAndFilters: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProjectServiceTest test = new ProjectServiceTest();
+            test.testProjectUpdateAndLifecycle();
+            test.tearDown();
+            passed++;
+            System.out.println("  [PASS] testProjectUpdateAndLifecycle");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testProjectUpdateAndLifecycle: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("ProjectServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in ProjectServiceTest");
+        }
     }
 }

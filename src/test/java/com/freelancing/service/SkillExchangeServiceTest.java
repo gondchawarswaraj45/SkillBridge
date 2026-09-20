@@ -8,9 +8,6 @@ import com.freelancing.service.freelancer.SkillExchangeService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,14 +24,12 @@ public class SkillExchangeServiceTest {
     private User offererUser;
     private User requesterUser;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         exchangeService = new SkillExchangeService();
         notificationService = new NotificationService();
     }
 
-    @BeforeEach
     public void setUp() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         offererUser = new User();
@@ -73,7 +68,6 @@ public class SkillExchangeServiceTest {
         }
     }
 
-    @Test
     public void testCreateOfferAndBrowse() {
         SkillExchange offer = exchangeService.createOffer(
                 offererUser.getId(),
@@ -91,7 +85,6 @@ public class SkillExchangeServiceTest {
         assertTrue(myOffers.stream().anyMatch(o -> o.getId().equals(offer.getId())));
     }
 
-    @Test
     public void testRequestExchangeWorkflow() {
         SkillExchange offer = exchangeService.createOffer(
                 offererUser.getId(),
@@ -117,7 +110,6 @@ public class SkillExchangeServiceTest {
         assertTrue(notifs.stream().anyMatch(n -> "SKILL_EXCHANGE".equals(n.getType()) && n.getTitle().contains("Skill Barter Request")));
     }
 
-    @Test
     public void testAcceptExchangeWorkflow() {
         SkillExchange offer = exchangeService.createOffer(
                 offererUser.getId(),
@@ -138,7 +130,6 @@ public class SkillExchangeServiceTest {
         assertTrue(notifs.stream().anyMatch(n -> "SKILL_EXCHANGE".equals(n.getType()) && n.getTitle().contains("Accepted")));
     }
 
-    @Test
     public void testRejectExchangeWorkflow() {
         SkillExchange offer = exchangeService.createOffer(
                 offererUser.getId(),
@@ -161,7 +152,6 @@ public class SkillExchangeServiceTest {
         assertTrue(notifs.stream().anyMatch(n -> "SKILL_EXCHANGE".equals(n.getType()) && n.getTitle().contains("Update")));
     }
 
-    @Test
     public void testCompleteExchangeWorkflow() {
         SkillExchange offer = exchangeService.createOffer(
                 offererUser.getId(),
@@ -186,7 +176,6 @@ public class SkillExchangeServiceTest {
         assertTrue(reqNotifs.stream().anyMatch(n -> "SKILL_EXCHANGE".equals(n.getType()) && n.getTitle().contains("Completed")));
     }
 
-    @Test
     public void testSelfRequestDisallowed() {
         SkillExchange offer = exchangeService.createOffer(
                 offererUser.getId(),
@@ -198,5 +187,86 @@ public class SkillExchangeServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             exchangeService.requestExchange(offer.getId(), offererUser.getId(), "Barter with myself");
         });
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running SkillExchangeServiceTest...");
+        int passed = 0;
+        int total = 6;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for SkillExchangeServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            SkillExchangeServiceTest test = new SkillExchangeServiceTest();
+            test.setUp();
+            test.testCreateOfferAndBrowse();
+            passed++;
+            System.out.println("  [PASS] testCreateOfferAndBrowse");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCreateOfferAndBrowse: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            SkillExchangeServiceTest test = new SkillExchangeServiceTest();
+            test.setUp();
+            test.testRequestExchangeWorkflow();
+            passed++;
+            System.out.println("  [PASS] testRequestExchangeWorkflow");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testRequestExchangeWorkflow: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            SkillExchangeServiceTest test = new SkillExchangeServiceTest();
+            test.setUp();
+            test.testAcceptExchangeWorkflow();
+            passed++;
+            System.out.println("  [PASS] testAcceptExchangeWorkflow");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAcceptExchangeWorkflow: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            SkillExchangeServiceTest test = new SkillExchangeServiceTest();
+            test.setUp();
+            test.testRejectExchangeWorkflow();
+            passed++;
+            System.out.println("  [PASS] testRejectExchangeWorkflow");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testRejectExchangeWorkflow: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            SkillExchangeServiceTest test = new SkillExchangeServiceTest();
+            test.setUp();
+            test.testCompleteExchangeWorkflow();
+            passed++;
+            System.out.println("  [PASS] testCompleteExchangeWorkflow");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCompleteExchangeWorkflow: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            SkillExchangeServiceTest test = new SkillExchangeServiceTest();
+            test.setUp();
+            test.testSelfRequestDisallowed();
+            passed++;
+            System.out.println("  [PASS] testSelfRequestDisallowed");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSelfRequestDisallowed: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("SkillExchangeServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in SkillExchangeServiceTest");
+        }
     }
 }

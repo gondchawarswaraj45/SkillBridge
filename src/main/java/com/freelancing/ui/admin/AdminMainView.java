@@ -23,6 +23,7 @@ import com.freelancing.db.DatabaseManager;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
@@ -65,7 +66,7 @@ public class AdminMainView {
         this(user);
     }
 
-    public Scene createScene() {
+    public Parent createContent() {
         root = new BorderPane();
         root.setStyle("-fx-background-color: " + AppTheme.getBgDark() + ";");
 
@@ -73,34 +74,36 @@ public class AdminMainView {
         HBox header = new HBox(15);
         header.setPadding(new Insets(12, 24, 12, 24));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color: " + AppTheme.getBgPanel() + ";" +
-                "-fx-border-color: " + AppTheme.getBorderColor() + ";" +
-                "-fx-border-width: 0 0 1 0;");
+        header.setStyle(AppTheme.getTitleBarStyle());
 
         Button btnToggleSidebar = new Button("☰");
         btnToggleSidebar.setTooltip(new Tooltip("Toggle / Close Sidebar"));
         btnToggleSidebar.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        btnToggleSidebar.setStyle("-fx-background-color: " + AppTheme.getBgCard() + "; -fx-text-fill: " + AppTheme.COLOR_PRIMARY + "; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: " + AppTheme.getBorderColor() + "; -fx-border-radius: 6;");
+        btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6;");
+        btnToggleSidebar.setOnMouseEntered(e -> btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.32); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: #FFFFFF; -fx-border-radius: 6;"));
+        btnToggleSidebar.setOnMouseExited(e -> btnToggleSidebar.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 11; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6;"));
 
         Label logo = new Label("⚡ SkillBridge  |  Admin Panel");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
-        logo.setTextFill(Color.web(AppTheme.COLOR_PRIMARY));
+        logo.setTextFill(Color.web("#FFFFFF"));
+        logo.setStyle("-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 4, 0, 0, 1);");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnHome = UIComponents.createSecondaryButton("🏠 SkillBridge Home");
-        btnHome.setOnAction(e -> HomePage.showHomeView());
+        Button btnHome = UIComponents.createTitleBarButton("🏠 SkillBridge Home", () -> HomePage.showHomeView());
 
         Button btnTheme = UIComponents.createThemeToggle(() -> {
             HomePage.showAdminView(currentUser);
         });
 
         Label userLabel = new Label("👑 " + currentUser.getUsername() + " (Super Admin)");
-        userLabel.setTextFill(Color.web(AppTheme.getTextPrimary()));
+        userLabel.setTextFill(Color.web("#FFFFFF"));
         userLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        userLabel.setStyle("-fx-background-color: rgba(255, 255, 255, 0.18); -fx-padding: 6 14; -fx-background-radius: 20; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);");
 
         Button btnLogout = UIComponents.createDangerButton("Logout");
+        btnLogout.setStyle("-fx-background-color: #DC2626; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-border-color: #EF4444; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14; -fx-cursor: hand;");
         btnLogout.setOnAction(e -> {
             HomePage.showLoginView();
         });
@@ -220,10 +223,15 @@ public class AdminMainView {
         });
 
         showDashboard();
+        return root;
+    }
+
+    public Scene createScene() {
+        Parent content = createContent();
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
         double sceneWidth = Math.min(1360, bounds.getWidth() * 0.94);
         double sceneHeight = Math.min(880, bounds.getHeight() * 0.94);
-        Scene scene = new Scene(root, sceneWidth, sceneHeight);
+        Scene scene = new Scene(content, sceneWidth, sceneHeight);
         AppTheme.applyAppStylesheet(scene);
         return scene;
     }
@@ -283,24 +291,31 @@ public class AdminMainView {
         });
     }
 
+    private static class DashboardData {
+        final Map<String, Object> kpis;
+        final List<User> allUsers;
+        final List<AuditLog> auditLogs;
+        DashboardData(Map<String, Object> kpis, List<User> allUsers, List<AuditLog> auditLogs) {
+            this.kpis = kpis;
+            this.allUsers = allUsers;
+            this.auditLogs = auditLogs;
+        }
+    }
+
     // 1. Executive Dashboard with JavaFX Charts (Multithreaded background data loading)
     private void showDashboard() {
         contentArea.getChildren().setAll(com.freelancing.util.AnimationUtil.createLoadingOverlay("Loading admin metrics & system analytics..."));
 
         com.freelancing.util.AnimationUtil.runAsync(
-            () -> {
-                Map<String, Object> kpis = adminService.getPlatformKpis();
-                List<User> allUsers = adminService.getUsers("", null, null);
-                List<AuditLog> auditLogs = adminService.getAuditLogs(10);
-                return new Object[] { kpis, allUsers, auditLogs };
-            },
+            () -> new DashboardData(
+                adminService.getPlatformKpis(),
+                adminService.getUsers("", null, null),
+                adminService.getAuditLogs(10)
+            ),
             data -> {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> kpis = (Map<String, Object>) data[0];
-                @SuppressWarnings("unchecked")
-                List<User> allUsers = (List<User>) data[1];
-                @SuppressWarnings("unchecked")
-                List<AuditLog> auditLogs = (List<AuditLog>) data[2];
+                Map<String, Object> kpis = data.kpis;
+                List<User> allUsers = data.allUsers;
+                List<AuditLog> auditLogs = data.auditLogs;
 
                 VBox box = new VBox(20);
                 Label title = UIComponents.createTitle("Admin System Metrics & Visual Analytics");
@@ -379,10 +394,17 @@ public class AdminMainView {
                 PieChart pieUser = UIComponents.createPieChart("User Base Demographics", userDistribution);
                 HBox.setHgrow(pieUser, Priority.ALWAYS);
 
-                @SuppressWarnings("unchecked")
-                Map<String, Double> categoryDistribution = (Map<String, Double>) kpis.get("projectsByCategory");
-                if (categoryDistribution == null || categoryDistribution.isEmpty()) {
-                    categoryDistribution = new LinkedHashMap<>();
+                Map<String, Double> categoryDistribution = new LinkedHashMap<>();
+                Object catObj = kpis.get("projectsByCategory");
+                if (catObj instanceof Map) {
+                    Map<?, ?> map = (Map<?, ?>) catObj;
+                    for (Map.Entry<?, ?> entry : map.entrySet()) {
+                        if (entry.getKey() != null && entry.getValue() instanceof Number) {
+                            categoryDistribution.put(entry.getKey().toString(), ((Number) entry.getValue()).doubleValue());
+                        }
+                    }
+                }
+                if (categoryDistribution.isEmpty()) {
                     categoryDistribution.put("Development", 5.0);
                     categoryDistribution.put("Design", 3.0);
                     categoryDistribution.put("Marketing", 2.0);

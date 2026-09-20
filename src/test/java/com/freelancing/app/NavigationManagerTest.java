@@ -3,10 +3,6 @@ package com.freelancing.app;
 import javafx.application.Platform;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,7 +10,6 @@ public class NavigationManagerTest {
 
     private NavigationManager navManager;
 
-    @BeforeAll
     public static void initJavaFX() {
         try {
             Platform.startup(() -> {});
@@ -23,30 +18,23 @@ public class NavigationManagerTest {
         }
     }
 
-    @BeforeEach
     public void setUp() {
         navManager = NavigationManager.getInstance();
         navManager.clearHistory();
     }
 
-    @Test
-    @DisplayName("Verify NavigationManager singleton behavior")
     public void testSingletonInstance() {
         assertNotNull(navManager, "NavigationManager instance must not be null");
         NavigationManager another = NavigationManager.getInstance();
         assertSame(navManager, another, "NavigationManager must return the exact same singleton instance");
     }
 
-    @Test
-    @DisplayName("Verify initial navigation state and history depth")
     public void testInitialState() {
         navManager.clearHistory();
         assertFalse(navManager.canGoBack(), "Initially, canGoBack should be false");
         assertEquals(0, navManager.getHistorySize(), "History size should initially be 0");
     }
 
-    @Test
-    @DisplayName("Verify view stack push, current root, and goBack transitions")
     public void testNavigationHistoryStack() {
         Pane view1 = new Pane();
         Pane view2 = new StackPane();
@@ -86,8 +74,6 @@ public class NavigationManagerTest {
         assertFalse(navManager.goBack(), "goBack on empty stack should return false");
     }
 
-    @Test
-    @DisplayName("Verify clearHistory resets navigation stack")
     public void testClearHistory() {
         Pane v1 = new Pane();
         Pane v2 = new Pane();
@@ -101,16 +87,93 @@ public class NavigationManagerTest {
         assertEquals(0, navManager.getHistorySize());
     }
 
-    @Test
-    @DisplayName("Verify null safety during navigation operations")
     public void testNullSafety() {
         assertDoesNotThrow(() -> navManager.navigateTo(null), "navigateTo(null) should be a safe no-op");
         assertDoesNotThrow(() -> navManager.setScene(null), "setScene(null) should be a safe no-op");
     }
 
-    @Test
-    @DisplayName("Verify showAdminLogin sets admin mode login view")
     public void testShowAdminLogin() {
         assertDoesNotThrow(() -> navManager.showAdminLogin(), "showAdminLogin should create and set admin login scene safely");
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running NavigationManagerTest...");
+        int passed = 0;
+        int total = 6;
+        try {
+            initJavaFX();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for NavigationManagerTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            NavigationManagerTest test = new NavigationManagerTest();
+            test.setUp();
+            test.testSingletonInstance();
+            passed++;
+            System.out.println("  [PASS] testSingletonInstance");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSingletonInstance: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NavigationManagerTest test = new NavigationManagerTest();
+            test.setUp();
+            test.testInitialState();
+            passed++;
+            System.out.println("  [PASS] testInitialState");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testInitialState: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NavigationManagerTest test = new NavigationManagerTest();
+            test.setUp();
+            test.testNavigationHistoryStack();
+            passed++;
+            System.out.println("  [PASS] testNavigationHistoryStack");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testNavigationHistoryStack: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NavigationManagerTest test = new NavigationManagerTest();
+            test.setUp();
+            test.testClearHistory();
+            passed++;
+            System.out.println("  [PASS] testClearHistory");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testClearHistory: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NavigationManagerTest test = new NavigationManagerTest();
+            test.setUp();
+            test.testNullSafety();
+            passed++;
+            System.out.println("  [PASS] testNullSafety");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testNullSafety: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            NavigationManagerTest test = new NavigationManagerTest();
+            test.setUp();
+            test.testShowAdminLogin();
+            passed++;
+            System.out.println("  [PASS] testShowAdminLogin");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testShowAdminLogin: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("NavigationManagerTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in NavigationManagerTest");
+        }
     }
 }

@@ -20,9 +20,6 @@ import com.freelancing.service.company.MilestoneService;
 
 import com.freelancing.config.SecurityConfig;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -52,7 +49,6 @@ public class ContractServiceTest {
     private Project project;
     private Proposal proposal;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         userDAO = new UserDAO();
@@ -64,7 +60,6 @@ public class ContractServiceTest {
         milestoneDAO = new MilestoneDAO();
     }
 
-    @BeforeEach
     public void setup() {
         contractService = new ContractService();
         milestoneService = new MilestoneService();
@@ -128,7 +123,6 @@ public class ContractServiceTest {
         proposalDAO.create(proposal);
     }
 
-    @Test
     public void testAtomicHiringTransactionSuccess() {
         Contract contract = contractService.hireFreelancer(proposal.getId(), clientUser.getId(), null);
 
@@ -168,7 +162,6 @@ public class ContractServiceTest {
         assertEquals(freelancerProfile.getId(), dbProject.getAwardedFreelancerId());
     }
 
-    @Test
     public void testAtomicHiringTransactionRollbackOnUnauthorizedClient() {
         Exception ex = assertThrows(RuntimeException.class, () -> {
             // Passing freelancerUser instead of clientUser should fail client ownership check
@@ -188,7 +181,6 @@ public class ContractServiceTest {
         assertNull(dbContract, "No contract should be created if transaction failed");
     }
 
-    @Test
     public void testAtomicHiringTransactionRollbackOnAlreadyAcceptedProposal() {
         // First hire succeeds
         contractService.hireFreelancer(proposal.getId(), clientUser.getId(), null);
@@ -199,7 +191,6 @@ public class ContractServiceTest {
         });
     }
 
-    @Test
     public void testDeliverableSubmissionAndStorage() throws IOException {
         Contract contract = contractService.hireFreelancer(proposal.getId(), clientUser.getId(), null);
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
@@ -229,7 +220,6 @@ public class ContractServiceTest {
         assertEquals(deliverable.getId(), updatedM1.getLatestDeliverable().getId());
     }
 
-    @Test
     public void testMilestoneRevisionAndApprovalLifecycle() throws IOException {
         Contract contract = contractService.hireFreelancer(proposal.getId(), clientUser.getId(), null);
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
@@ -259,7 +249,6 @@ public class ContractServiceTest {
         assertEquals(Milestone.Status.IN_PROGRESS, m2.getStatus(), "Next milestone should automatically advance to IN_PROGRESS");
     }
 
-    @Test
     public void testMilestonePaymentAndContractCompletion() throws IOException {
         Contract contract = contractService.hireFreelancer(proposal.getId(), clientUser.getId(), null);
         List<Milestone> milestones = milestoneService.getMilestonesByContract(contract.getId());
@@ -285,5 +274,86 @@ public class ContractServiceTest {
 
         Project finalProject = projectDAO.findById(project.getId());
         assertEquals(Project.Status.COMPLETED, finalProject.getStatus(), "Project should be COMPLETED");
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running ContractServiceTest...");
+        int passed = 0;
+        int total = 6;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for ContractServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            ContractServiceTest test = new ContractServiceTest();
+            test.setup();
+            test.testAtomicHiringTransactionSuccess();
+            passed++;
+            System.out.println("  [PASS] testAtomicHiringTransactionSuccess");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAtomicHiringTransactionSuccess: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ContractServiceTest test = new ContractServiceTest();
+            test.setup();
+            test.testAtomicHiringTransactionRollbackOnUnauthorizedClient();
+            passed++;
+            System.out.println("  [PASS] testAtomicHiringTransactionRollbackOnUnauthorizedClient");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAtomicHiringTransactionRollbackOnUnauthorizedClient: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ContractServiceTest test = new ContractServiceTest();
+            test.setup();
+            test.testAtomicHiringTransactionRollbackOnAlreadyAcceptedProposal();
+            passed++;
+            System.out.println("  [PASS] testAtomicHiringTransactionRollbackOnAlreadyAcceptedProposal");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAtomicHiringTransactionRollbackOnAlreadyAcceptedProposal: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ContractServiceTest test = new ContractServiceTest();
+            test.setup();
+            test.testDeliverableSubmissionAndStorage();
+            passed++;
+            System.out.println("  [PASS] testDeliverableSubmissionAndStorage");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testDeliverableSubmissionAndStorage: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ContractServiceTest test = new ContractServiceTest();
+            test.setup();
+            test.testMilestoneRevisionAndApprovalLifecycle();
+            passed++;
+            System.out.println("  [PASS] testMilestoneRevisionAndApprovalLifecycle");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testMilestoneRevisionAndApprovalLifecycle: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ContractServiceTest test = new ContractServiceTest();
+            test.setup();
+            test.testMilestonePaymentAndContractCompletion();
+            passed++;
+            System.out.println("  [PASS] testMilestonePaymentAndContractCompletion");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testMilestonePaymentAndContractCompletion: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("ContractServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in ContractServiceTest");
+        }
     }
 }

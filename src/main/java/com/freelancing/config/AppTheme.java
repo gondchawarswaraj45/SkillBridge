@@ -35,6 +35,12 @@ public class AppTheme {
     public static final String COLOR_BG_INPUT = "#1E293B";
     public static final String COLOR_BORDER = "#334155";
 
+    // Vibrant Blue Title Bar & Navbar Theme
+    public static final String COLOR_TITLE_BAR_BG = "linear-gradient(to right, #0F2A4A 0%, #1E40AF 45%, #2563EB 100%)";
+    public static final String COLOR_TITLE_BAR_BORDER = "#3B82F6";
+    public static final String COLOR_TITLE_BAR_TEXT = "#FFFFFF";
+    public static final String COLOR_TITLE_BAR_TEXT_MUTED = "#DBEAFE";
+
     // Theme Management
     public static ThemeMode getCurrentTheme() {
         return currentTheme;
@@ -166,10 +172,14 @@ public class AppTheme {
         return "-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;";
     }
 
+    public static String getTitleBarStyle() {
+        return "-fx-background-color: linear-gradient(to right, #0F2A4A 0%, #1E40AF 45%, #2563EB 100%); " +
+               "-fx-border-color: #3B82F6; -fx-border-width: 0 0 2 0; " +
+               "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 10, 0, 0, 3);";
+    }
+
     public static String getNavbarStyle() {
-        return isDarkMode()
-            ? "-fx-background-color: #0F172A; -fx-border-color: #334155; -fx-border-width: 0 0 1 0;"
-            : "-fx-background-color: linear-gradient(to right, #4338CA, #6366F1, #7C3AED); -fx-border-color: #3730A3; -fx-border-width: 0 0 1 0; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 3);";
+        return getTitleBarStyle();
     }
 
     public static String getTickerStyle() {

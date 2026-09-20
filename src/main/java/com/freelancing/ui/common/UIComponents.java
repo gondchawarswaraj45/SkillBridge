@@ -362,6 +362,21 @@ public class UIComponents {
         return btn;
     }
 
+    /** Creates a styled button specifically for the blue title bar / navbar with high visibility */
+    public static Button createTitleBarButton(String text, Runnable action) {
+        Button btn = new Button(text);
+        btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        String base = "-fx-background-color: rgba(255, 255, 255, 0.16); -fx-text-fill: #FFFFFF; -fx-border-color: rgba(255, 255, 255, 0.35); -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14; -fx-cursor: hand;";
+        String hover = "-fx-background-color: #FFFFFF; -fx-text-fill: #1D4ED8; -fx-border-color: #FFFFFF; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 2);";
+        btn.setStyle(base);
+        btn.setOnMouseEntered(e -> btn.setStyle(hover));
+        btn.setOnMouseExited(e -> btn.setStyle(base));
+        if (action != null) {
+            btn.setOnAction(e -> action.run());
+        }
+        return btn;
+    }
+
     public static Button createExportButton(String text) {
         Button btn = new Button(text);
         btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
@@ -532,9 +547,8 @@ public class UIComponents {
     // ═══════════════════════════════════════════════════════════════
 
     /** Creates a premium styled ComboBox with neon glow hover effects */
-    @SafeVarargs
-    public static <T> ComboBox<T> createStyledComboBox(T... items) {
-        ComboBox<T> cb = new ComboBox<>();
+    public static ComboBox<String> createStyledComboBox(String... items) {
+        ComboBox<String> cb = new ComboBox<>();
         if (items != null && items.length > 0) {
             cb.getItems().addAll(items);
             cb.setValue(items[0]);

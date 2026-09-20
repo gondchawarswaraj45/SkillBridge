@@ -14,9 +14,6 @@ import com.freelancing.model.freelancer.PortfolioItem;
 
 import com.freelancing.db.DatabaseInitializer;
 import com.freelancing.util.StorageManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -34,7 +31,6 @@ public class ProfileAndSkillsTest {
     private static PortfolioDAO portfolioDAO;
     private static CertificationDAO certDAO;
 
-    @BeforeAll
     public static void setUp() {
         DatabaseInitializer.initialize();
         freelancerDAO = new FreelancerProfileDAO();
@@ -45,8 +41,6 @@ public class ProfileAndSkillsTest {
         certDAO = new CertificationDAO();
     }
 
-    @Test
-    @DisplayName("Verify FreelancerProfile CRUD operations")
     public void testFreelancerProfileCrud() {
         FreelancerProfile alex = freelancerDAO.findByUserId("usr_free1");
         assertNotNull(alex, "Seed freelancer alex should exist in SQLite");
@@ -69,8 +63,6 @@ public class ProfileAndSkillsTest {
         assertEquals(75.0, reFetched.getHourlyRate());
     }
 
-    @Test
-    @DisplayName("Verify ClientProfile CRUD operations")
     public void testClientProfileCrud() {
         ClientProfile sarah = clientDAO.findByUserId("usr_client1");
         assertNotNull(sarah, "Seed client sarah should exist in SQLite");
@@ -87,8 +79,6 @@ public class ProfileAndSkillsTest {
         assertEquals("Updated FinTech enterprise mission.", reFetched.getAbout());
     }
 
-    @Test
-    @DisplayName("Verify Skill catalog search and retrieval")
     public void testSkillCatalog() {
         List<Skill> javaSkills = skillDAO.search("Java");
         assertFalse(javaSkills.isEmpty(), "Searching for Java should yield results");
@@ -107,8 +97,6 @@ public class ProfileAndSkillsTest {
         assertNotNull(fetched);
     }
 
-    @Test
-    @DisplayName("Verify Freelancer skills association in SQLite")
     public void testFreelancerSkillsAssociation() {
         List<String> skillNames = freelancerSkillDAO.findSkillNamesByFreelancerId("fp_alex");
         assertFalse(skillNames.isEmpty(), "Alex should have associated skills");
@@ -126,8 +114,6 @@ public class ProfileAndSkillsTest {
         assertFalse(freelancerSkillDAO.hasSkill("fp_alex", "sk_5"));
     }
 
-    @Test
-    @DisplayName("Verify Portfolio items CRUD in SQLite")
     public void testPortfolioCrud() {
         List<PortfolioItem> items = portfolioDAO.findByFreelancerId("fp_alex");
         assertFalse(items.isEmpty(), "Alex should have seed portfolio item");
@@ -146,8 +132,6 @@ public class ProfileAndSkillsTest {
         assertNull(portfolioDAO.findById("port_test_junit"));
     }
 
-    @Test
-    @DisplayName("Verify Certifications CRUD in SQLite")
     public void testCertificationCrud() {
         Certification cert = new Certification("cert_test_1", "fp_alex", "AWS Solutions Architect",
                 "Amazon Web Services", "2026-03", "https://aws.cert/123", null);
@@ -161,8 +145,6 @@ public class ProfileAndSkillsTest {
         assertTrue(deleted);
     }
 
-    @Test
-    @DisplayName("Verify StorageManager local directory initialization and file upload")
     public void testStorageManager() throws IOException {
         StorageManager.initStorage();
         assertTrue(new File(StorageManager.PROFILES_DIR).exists());
@@ -185,5 +167,89 @@ public class ProfileAndSkillsTest {
         // Cleanup temp file
         tempFile.delete();
         savedFile.delete();
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running ProfileAndSkillsTest...");
+        int passed = 0;
+        int total = 7;
+        try {
+            setUp();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for ProfileAndSkillsTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testFreelancerProfileCrud();
+            passed++;
+            System.out.println("  [PASS] testFreelancerProfileCrud");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testFreelancerProfileCrud: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testClientProfileCrud();
+            passed++;
+            System.out.println("  [PASS] testClientProfileCrud");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testClientProfileCrud: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testSkillCatalog();
+            passed++;
+            System.out.println("  [PASS] testSkillCatalog");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSkillCatalog: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testFreelancerSkillsAssociation();
+            passed++;
+            System.out.println("  [PASS] testFreelancerSkillsAssociation");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testFreelancerSkillsAssociation: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testPortfolioCrud();
+            passed++;
+            System.out.println("  [PASS] testPortfolioCrud");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testPortfolioCrud: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testCertificationCrud();
+            passed++;
+            System.out.println("  [PASS] testCertificationCrud");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCertificationCrud: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProfileAndSkillsTest test = new ProfileAndSkillsTest();
+            test.testStorageManager();
+            passed++;
+            System.out.println("  [PASS] testStorageManager");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testStorageManager: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("ProfileAndSkillsTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in ProfileAndSkillsTest");
+        }
     }
 }

@@ -9,9 +9,6 @@ import com.freelancing.service.common.NotificationService;
 
 import com.freelancing.db.DatabaseConnection;
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,14 +25,12 @@ public class CommunityServiceTest {
     private User authorUser;
     private User commenterUser;
 
-    @BeforeAll
     public static void initDatabase() {
         DatabaseInitializer.initialize();
         communityService = new CommunityService();
         notificationService = new NotificationService();
     }
 
-    @BeforeEach
     public void setUp() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         authorUser = new User();
@@ -74,7 +69,6 @@ public class CommunityServiceTest {
         }
     }
 
-    @Test
     public void testCreatePostAndQueryByCategory() {
         CommunityPost post1 = communityService.createPost(
                 authorUser.getId(),
@@ -102,7 +96,6 @@ public class CommunityServiceTest {
         assertTrue(allPosts.stream().anyMatch(p -> p.getId().equals(post2.getId())));
     }
 
-    @Test
     public void testToggleLikePost() {
         CommunityPost post = communityService.createPost(
                 authorUser.getId(),
@@ -128,7 +121,6 @@ public class CommunityServiceTest {
         assertFalse(fetched.isLikedByCurrentUser());
     }
 
-    @Test
     public void testAddCommentAndNotification() {
         CommunityPost post = communityService.createPost(
                 authorUser.getId(),
@@ -155,7 +147,6 @@ public class CommunityServiceTest {
         assertTrue(notifs.stream().anyMatch(n -> "COMMUNITY".equals(n.getType()) && n.getMessage().contains(commenterUser.getUsername())));
     }
 
-    @Test
     public void testReportPost() {
         CommunityPost post = communityService.createPost(
                 authorUser.getId(),
@@ -172,7 +163,6 @@ public class CommunityServiceTest {
         assertTrue(notifs.stream().anyMatch(n -> n.getTitle().contains("Report Received")));
     }
 
-    @Test
     public void testKeywordSearch() {
         String uniqueTag = "Tag_" + UUID.randomUUID().toString().substring(0, 6);
         communityService.createPost(authorUser.getId(), "Post with " + uniqueTag, "Description here", CommunityPost.CAT_GENERAL);
@@ -180,5 +170,76 @@ public class CommunityServiceTest {
 
         List<CommunityPost> results = communityService.getPosts("ALL", uniqueTag, authorUser.getId());
         assertEquals(2, results.size());
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running CommunityServiceTest...");
+        int passed = 0;
+        int total = 5;
+        try {
+            initDatabase();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for CommunityServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            CommunityServiceTest test = new CommunityServiceTest();
+            test.setUp();
+            test.testCreatePostAndQueryByCategory();
+            passed++;
+            System.out.println("  [PASS] testCreatePostAndQueryByCategory");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testCreatePostAndQueryByCategory: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            CommunityServiceTest test = new CommunityServiceTest();
+            test.setUp();
+            test.testToggleLikePost();
+            passed++;
+            System.out.println("  [PASS] testToggleLikePost");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testToggleLikePost: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            CommunityServiceTest test = new CommunityServiceTest();
+            test.setUp();
+            test.testAddCommentAndNotification();
+            passed++;
+            System.out.println("  [PASS] testAddCommentAndNotification");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testAddCommentAndNotification: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            CommunityServiceTest test = new CommunityServiceTest();
+            test.setUp();
+            test.testReportPost();
+            passed++;
+            System.out.println("  [PASS] testReportPost");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testReportPost: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            CommunityServiceTest test = new CommunityServiceTest();
+            test.setUp();
+            test.testKeywordSearch();
+            passed++;
+            System.out.println("  [PASS] testKeywordSearch");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testKeywordSearch: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("CommunityServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in CommunityServiceTest");
+        }
     }
 }

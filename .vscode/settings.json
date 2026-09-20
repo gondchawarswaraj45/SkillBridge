@@ -18,6 +18,8 @@
     "java.import.maven.enabled": true,
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.compile.nullAnalysis.mode": "disabled",
+    "java.debug.settings.onBuildFailureProceed": true,
+    "java.debug.settings.forceBuildBeforeLaunch": false,
     "files.exclude": {
         "**/bin": true
     }

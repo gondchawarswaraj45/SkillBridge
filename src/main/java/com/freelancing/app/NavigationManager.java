@@ -15,11 +15,15 @@ import com.freelancing.ui.freelancer.FreelancerMainView;
 import com.freelancing.ui.freelancer.SkillExchangeView;
 
 import com.freelancing.config.AppTheme;
+import com.freelancing.ui.common.AppTitleBar;
+import com.freelancing.ui.common.WindowResizeHelper;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.SubScene;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -33,14 +37,21 @@ public class NavigationManager {
     private Stage primaryStage;
     private Scene primaryScene;
     private final StackPane masterRoot = new StackPane();
+    private final VBox windowContainer = new VBox();
+    private AppTitleBar appTitleBar;
     private final StackPane contentHost = new StackPane();
     private final StackPane modalOverlayLayer = new StackPane();
     private final Deque<Parent> viewHistory = new ArrayDeque<>();
     private Parent currentRoot;
-    private SubScene activeSubScene;
 
     private NavigationManager() {
-        masterRoot.getChildren().addAll(contentHost, modalOverlayLayer);
+        VBox.setVgrow(contentHost, Priority.ALWAYS);
+        windowContainer.getChildren().add(contentHost);
+        windowContainer.setStyle("-fx-background-color: #0B0F19;");
+        contentHost.setStyle("-fx-background-color: #0B0F19;");
+
+        masterRoot.getChildren().addAll(windowContainer, modalOverlayLayer);
+        masterRoot.setStyle("-fx-background-color: #0B0F19; -fx-border-color: #2563EB; -fx-border-width: 1px;");
         modalOverlayLayer.setPickOnBounds(false);
         modalOverlayLayer.setVisible(false);
     }
@@ -54,6 +65,18 @@ public class NavigationManager {
 
     public void setPrimaryStage(Stage stage) {
         this.primaryStage = stage;
+        if (stage != null) {
+            if (!stage.isShowing()) {
+                try {
+                    stage.initStyle(StageStyle.UNDECORATED);
+                } catch (Exception ignored) {}
+            }
+            if (appTitleBar == null) {
+                appTitleBar = new AppTitleBar(stage, "SkillBridge - Freelancing & Skill Exchange Platform");
+                windowContainer.getChildren().add(0, appTitleBar);
+            }
+            WindowResizeHelper.attach(stage);
+        }
         ensurePrimaryScene();
     }
 
@@ -62,10 +85,8 @@ public class NavigationManager {
     }
 
     public void setPrimaryScene(Scene scene) {
-        this.primaryScene = scene;
         if (scene != null) {
-            this.currentRoot = scene.getRoot();
-            AppTheme.applyAppStylesheet(scene);
+            setScene(scene);
         }
     }
 
@@ -85,11 +106,25 @@ public class NavigationManager {
         return modalOverlayLayer;
     }
 
+    public AppTitleBar getAppTitleBar() {
+        return appTitleBar;
+    }
+
+    public void setWindowTitle(String title) {
+        if (appTitleBar != null) {
+            appTitleBar.setTitle(title);
+        }
+        if (primaryStage != null) {
+            primaryStage.setTitle(title);
+        }
+    }
+
     private void ensurePrimaryScene() {
-        if (primaryScene == null) {
+        if (primaryScene == null || primaryScene.getRoot() != masterRoot) {
             double w = primaryStage != null && primaryStage.getWidth() > 0 ? primaryStage.getWidth() : 1280;
             double h = primaryStage != null && primaryStage.getHeight() > 0 ? primaryStage.getHeight() : 800;
             primaryScene = new Scene(masterRoot, w, h);
+            primaryScene.setFill(javafx.scene.paint.Color.web("#0B0F19"));
             AppTheme.applyAppStylesheet(primaryScene);
         }
         if (primaryStage != null && primaryStage.getScene() != primaryScene) {
@@ -101,16 +136,14 @@ public class NavigationManager {
     }
 
     /**
-     * Renders a root view encapsulated within a responsive SubScene on the single primary Stage.
+     * Renders a root view directly inside contentHost on the single primary Stage.
      */
     private void renderView(Parent root, boolean applyFade, boolean isForward, boolean isBack) {
         if (root == null) return;
-        ensurePrimaryScene();
         this.currentRoot = root;
-        AppTheme.applyAppStylesheet(root);
 
-        // 1. Detach from any existing Scene if root was created inside a standalone Scene
-        if (root.getScene() != null && root.getScene().getRoot() == root) {
+        // 1. Detach from any external Scene if root was previously mounted in a standalone Scene
+        if (root.getScene() != null && root.getScene() != primaryScene && root.getScene().getRoot() == root) {
             root.getScene().setRoot(new javafx.scene.Group());
         }
 
@@ -121,44 +154,32 @@ public class NavigationManager {
             ((javafx.scene.Group) root.getParent()).getChildren().remove(root);
         }
 
-        double w = masterRoot.getWidth() > 0 ? masterRoot.getWidth() : (primaryScene != null ? primaryScene.getWidth() : 1280);
-        double h = masterRoot.getHeight() > 0 ? masterRoot.getHeight() : (primaryScene != null ? primaryScene.getHeight() : 800);
+        // Guarantee root view is 100% visible with normal scale and position
+        root.setOpacity(1.0);
+        root.setScaleX(1.0);
+        root.setScaleY(1.0);
+        root.setTranslateX(0.0);
+        root.setTranslateY(0.0);
 
-        if (activeSubScene == null) {
-            activeSubScene = new SubScene(root, w, h);
-            activeSubScene.widthProperty().bind(masterRoot.widthProperty());
-            activeSubScene.heightProperty().bind(masterRoot.heightProperty());
-            contentHost.getChildren().setAll(activeSubScene);
-        } else {
-            if (activeSubScene.getRoot() != root) {
-                activeSubScene.setRoot(new javafx.scene.Group());
-                activeSubScene.setRoot(root);
-            }
-            if (!contentHost.getChildren().contains(activeSubScene)) {
-                contentHost.getChildren().setAll(activeSubScene);
-            }
-        }
-
-        if (primaryStage != null && primaryStage.getScene() != primaryScene) {
-            primaryStage.setScene(primaryScene);
-        }
+        contentHost.getChildren().setAll(root);
+        ensurePrimaryScene();
+        AppTheme.applyAppStylesheet(root);
+        root.applyCss();
 
         if (isForward) {
             com.freelancing.util.AnimationUtil.applySlideInRight(root, 280);
         } else if (isBack) {
             com.freelancing.util.AnimationUtil.applySlideInLeft(root, 280);
-        } else if (applyFade) {
-            com.freelancing.util.AnimationUtil.applyFadeZoom(root, 280);
         }
     }
 
     /**
-     * Updates the active view inside a SubScene on the primary stage.
+     * Updates the active view inside contentHost on the primary stage.
      */
     public void setScene(Scene scene) {
         if (scene == null) return;
         Parent root = scene.getRoot();
-        System.out.println("[SkillBridge-Nav] Setting active SubScene on primary stage (" + scene.getWidth() + "x" + scene.getHeight() + ")");
+        System.out.println("[SkillBridge-Nav] Setting active view on primary stage");
         renderView(root, true, false, false);
     }
 
@@ -197,9 +218,6 @@ public class NavigationManager {
     public void clearHistory() {
         viewHistory.clear();
         currentRoot = null;
-        if (activeSubScene != null) {
-            activeSubScene.setRoot(new javafx.scene.Group());
-        }
     }
 
     /** Get the current view root */
@@ -246,23 +264,23 @@ public class NavigationManager {
 
     public void showHome() {
         HomePage hp = HomePage.getInstance() != null ? HomePage.getInstance() : new HomePage();
-        setScene(hp.createHomeScene());
+        renderView(hp.createHomeView(), false, false, false);
     }
 
     public void showLogin() {
         LoginView loginView = new LoginView(this::showRoleDashboard);
-        setScene(loginView.createScene());
+        renderView(loginView.createContent(), false, false, false);
     }
 
     public void showRegister() {
         RegisterView registerView = new RegisterView(this::showRoleDashboard);
-        setScene(registerView.createScene());
+        renderView(registerView.createContent(), false, false, false);
     }
 
     public void showAdminLogin() {
         LoginView loginView = new LoginView(this::showRoleDashboard);
         loginView.setAdminMode(true);
-        setScene(loginView.createScene());
+        renderView(loginView.createContent(), false, false, false);
     }
 
     public void showRoleDashboard(User user) {
@@ -282,53 +300,47 @@ public class NavigationManager {
 
     public void showFreelancerDashboard(User user) {
         FreelancerMainView view = new FreelancerMainView(user);
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showClientDashboard(User user) {
         ClientMainView view = new ClientMainView(user);
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showAdminDashboard(User user) {
         AdminMainView view = new AdminMainView(user);
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showCommunityForum() {
         CommunityForumView view = new CommunityForumView();
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showSkillExchange() {
         SkillExchangeView view = new SkillExchangeView();
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showContractsAndEscrow() {
         ContractsAndEscrowView view = new ContractsAndEscrowView();
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showAnalyticsDashboard() {
         AnalyticsDashboardView view = new AnalyticsDashboardView();
-        setScene(view.createScene());
+        renderView(view.createContent(), false, false, false);
     }
 
     public void showCalendar(User user) {
         CalendarView view = new CalendarView(user);
-        double w = primaryStage != null ? primaryStage.getWidth() : 1280;
-        double h = primaryStage != null ? primaryStage.getHeight() : 800;
-        Scene scene = new Scene(view, w, h);
-        setScene(scene);
+        renderView(view, false, false, false);
     }
 
     public void showSettings(User user) {
         SettingsView view = new SettingsView(user, this::showHome);
-        double w = primaryStage != null ? primaryStage.getWidth() : 1280;
-        double h = primaryStage != null ? primaryStage.getHeight() : 800;
-        Scene scene = new Scene(view, w, h);
-        setScene(scene);
+        renderView(view, false, false, false);
     }
 }
 

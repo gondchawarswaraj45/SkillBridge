@@ -57,7 +57,6 @@ public class PaymentService {
         public String freelancerUsername;
         public boolean isDemoPayment = true;
 
-        @Override
         public String toString() {
             return "====================================================\n" +
                    "      SKILLBRIDGE ESCROW PAYMENT RECEIPT (DEMO)     \n" +

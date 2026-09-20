@@ -117,9 +117,9 @@ public class SkillExchangeView {
 
         Label logo = new Label("⚡ SkillBridge");
         logo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        logo.setTextFill(Color.web(AppTheme.COLOR_PRIMARY));
+        logo.setTextFill(Color.web("#FFFFFF"));
         logo.setOnMouseClicked(e -> HomePage.showHomeView());
-        logo.setStyle("-fx-cursor: hand;");
+        logo.setStyle("-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 4, 0, 0, 1);");
 
         // Global Nav Links
         HBox navLinks = new HBox(12);
@@ -144,8 +144,7 @@ public class SkillExchangeView {
         Button btnPostSwap = UIComponents.createAccentButton("＋ Post Swap Offer");
         btnPostSwap.setOnAction(e -> openPostSwapModal());
 
-        Button btnBackHome = UIComponents.createExportButton("← Back to Home");
-        btnBackHome.setOnAction(e -> HomePage.showHomeView());
+        Button btnBackHome = UIComponents.createTitleBarButton("← Back to Home", () -> HomePage.showHomeView());
 
         nav.getChildren().addAll(logo, navLinks, sp, btnTheme, btnPostSwap, btnBackHome);
         return nav;
@@ -155,11 +154,11 @@ public class SkillExchangeView {
         Button btn = new Button(title);
         btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
         if (active) {
-            btn.setStyle("-fx-background-color: " + AppTheme.COLOR_PRIMARY + "; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;");
+            btn.setStyle("-fx-background-color: #FFFFFF; -fx-text-fill: #1D4ED8; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 2);");
         } else {
-            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + (AppTheme.isDarkMode() ? "#CBD5E1" : "#1E293B") + "; -fx-padding: 6 12; -fx-cursor: hand;");
-            btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: " + (AppTheme.isDarkMode() ? "#1E293B" : "#CAD8EA") + "; -fx-text-fill: " + AppTheme.COLOR_PRIMARY + "; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;"));
-            btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + (AppTheme.isDarkMode() ? "#CBD5E1" : "#1E293B") + "; -fx-padding: 6 12; -fx-cursor: hand;"));
+            btn.setStyle("-fx-background-color: rgba(255, 255, 255, 0.12); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;");
+            btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: rgba(255, 255, 255, 0.25); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;"));
+            btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: rgba(255, 255, 255, 0.12); -fx-text-fill: #FFFFFF; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;"));
         }
         btn.setOnAction(e -> {
             if (action != null) action.run();

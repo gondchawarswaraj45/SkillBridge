@@ -13,9 +13,6 @@ import com.freelancing.model.freelancer.FreelancerProfile;
 import com.freelancing.service.company.ProposalService;
 
 import com.freelancing.db.DatabaseInitializer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +33,6 @@ public class ProposalServiceTest {
     private static User testFreelancerUser;
     private static FreelancerProfile testFreelancerProfile;
 
-    @BeforeAll
     public static void setUp() {
         DatabaseInitializer.initialize();
         proposalDAO = new ProposalDAO();
@@ -111,8 +107,6 @@ public class ProposalServiceTest {
         return p;
     }
 
-    @Test
-    @DisplayName("Verify successful proposal submission with 6-factor AI match score and persistence")
     public void testSubmitProposalSuccess() {
         Project proj = createTestProject("Desktop Application Development");
         String projId = proj.getId();
@@ -137,8 +131,6 @@ public class ProposalServiceTest {
         assertEquals(testFreelancerUser.getUsername(), fromDb.getFreelancerName());
     }
 
-    @Test
-    @DisplayName("Verify duplicate proposal submission throws IllegalStateException")
     public void testDuplicateProposalPrevention() {
         Project proj = createTestProject("Unique Bid Constraint Project");
         String projId = proj.getId();
@@ -155,8 +147,6 @@ public class ProposalServiceTest {
         assertTrue(ex.getMessage().contains("already submitted"), "Exception message should indicate duplicate proposal");
     }
 
-    @Test
-    @DisplayName("Verify Proposal status transitions: SHORTLISTED and ACCEPTED")
     public void testShortlistAndAcceptProposal() {
         Project proj = createTestProject("Lifecycle Test Project");
         String projId = proj.getId();
@@ -183,8 +173,6 @@ public class ProposalServiceTest {
         assertEquals(testFreelancerProfile.getId(), projDb.getAwardedFreelancerId());
     }
 
-    @Test
-    @DisplayName("Verify Client proposal rejection")
     public void testRejectProposal() {
         Project proj = createTestProject("Rejection Project Test");
         String projId = proj.getId();
@@ -198,8 +186,6 @@ public class ProposalServiceTest {
         assertEquals(Proposal.Status.REJECTED, pRej.getStatus());
     }
 
-    @Test
-    @DisplayName("Verify Freelancer can withdraw a submitted proposal")
     public void testWithdrawProposal() {
         Project proj = createTestProject("Withdrawal Project Test");
         String projId = proj.getId();
@@ -213,8 +199,6 @@ public class ProposalServiceTest {
         assertEquals(Proposal.Status.WITHDRAWN, pWith.getStatus());
     }
 
-    @Test
-    @DisplayName("Verify queries for Client, Freelancer, and Project proposals")
     public void testProposalQueries() {
         Project proj = createTestProject("Query Testing Project");
         String projId = proj.getId();
@@ -229,5 +213,80 @@ public class ProposalServiceTest {
 
         List<Proposal> byFree = proposalService.getProposalsForFreelancer(testFreelancerUser.getId());
         assertFalse(byFree.isEmpty());
+    }
+
+    public static void main(String[] args) {
+        runTests();
+    }
+
+    public static void runTests() {
+        System.out.println("Running ProposalServiceTest...");
+        int passed = 0;
+        int total = 6;
+        try {
+            setUp();
+        } catch (Throwable t) {
+            System.err.println("Setup failed for ProposalServiceTest: " + t.getMessage());
+            t.printStackTrace();
+            return;
+        }
+        try {
+            ProposalServiceTest test = new ProposalServiceTest();
+            test.testSubmitProposalSuccess();
+            passed++;
+            System.out.println("  [PASS] testSubmitProposalSuccess");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testSubmitProposalSuccess: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProposalServiceTest test = new ProposalServiceTest();
+            test.testDuplicateProposalPrevention();
+            passed++;
+            System.out.println("  [PASS] testDuplicateProposalPrevention");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testDuplicateProposalPrevention: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProposalServiceTest test = new ProposalServiceTest();
+            test.testShortlistAndAcceptProposal();
+            passed++;
+            System.out.println("  [PASS] testShortlistAndAcceptProposal");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testShortlistAndAcceptProposal: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProposalServiceTest test = new ProposalServiceTest();
+            test.testRejectProposal();
+            passed++;
+            System.out.println("  [PASS] testRejectProposal");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testRejectProposal: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProposalServiceTest test = new ProposalServiceTest();
+            test.testWithdrawProposal();
+            passed++;
+            System.out.println("  [PASS] testWithdrawProposal");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testWithdrawProposal: " + t.getMessage());
+            t.printStackTrace();
+        }
+        try {
+            ProposalServiceTest test = new ProposalServiceTest();
+            test.testProposalQueries();
+            passed++;
+            System.out.println("  [PASS] testProposalQueries");
+        } catch (Throwable t) {
+            System.err.println("  [FAIL] testProposalQueries: " + t.getMessage());
+            t.printStackTrace();
+        }
+        System.out.println("ProposalServiceTest: " + passed + "/" + total + " tests passed.\n");
+        if (passed != total) {
+            throw new RuntimeException("Tests failed in ProposalServiceTest");
+        }
     }
 }
