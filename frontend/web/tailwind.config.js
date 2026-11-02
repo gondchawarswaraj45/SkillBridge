@@ -32,6 +32,14 @@ export default {
           800: '#5B21B6',
           900: '#4C1D95',
         },
+        dark: {
+          bg: '#0B0F19', // Sleek dark slate
+          card: '#111827',
+          surface: '#1F2937',
+          border: '#374151',
+          text: '#F9FAFB',
+          muted: '#9CA3AF',
+        },
         surface: {
           bg: '#F8F9FC',
           card: '#FFFFFF',
@@ -47,9 +55,11 @@ export default {
         'soft-sm': '0 1px 3px 0 rgba(23, 32, 51, 0.05)',
         'soft-md': '0 4px 6px -1px rgba(23, 32, 51, 0.06), 0 2px 4px -1px rgba(23, 32, 51, 0.04)',
         'soft-lg': '0 10px 15px -3px rgba(23, 32, 51, 0.08), 0 4px 6px -2px rgba(23, 32, 51, 0.03)',
+        'dark-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.3)',
+        'dark-md': '0 4px 6px -1px rgba(0, 0, 0, 0.4)',
+        'dark-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
       }
     },
   },
   plugins: [],
 }
-

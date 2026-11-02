@@ -2,28 +2,36 @@ import React from 'react';
 import { cn } from '@/utils/cn';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, children, disabled, ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none rounded-xl';
+      'inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none rounded-xl select-none';
 
     const variants = {
-      primary: 'bg-brand-500 hover:bg-brand-600 text-white shadow-soft-sm focus:ring-brand-400',
-      secondary: 'bg-accent-500 hover:bg-accent-600 text-white shadow-soft-sm focus:ring-accent-400',
-      outline: 'border border-surface-border bg-white hover:bg-slate-50 text-surface-text focus:ring-slate-300',
-      ghost: 'hover:bg-slate-100 text-surface-text focus:ring-slate-200',
-      danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-400',
+      primary:
+        'bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white shadow-soft-sm focus:ring-brand-400 dark:focus:ring-offset-slate-900',
+      secondary:
+        'bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-white shadow-soft-sm focus:ring-accent-400 dark:focus:ring-offset-slate-900',
+      outline:
+        'border border-surface-border dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-surface-text dark:text-slate-100 focus:ring-slate-300 dark:focus:ring-slate-700 shadow-soft-sm',
+      ghost:
+        'hover:bg-slate-100 dark:hover:bg-slate-800 text-surface-text dark:text-slate-200 focus:ring-slate-200 dark:focus:ring-slate-700',
+      danger:
+        'bg-red-600 hover:bg-red-700 text-white focus:ring-red-400 dark:focus:ring-offset-slate-900 shadow-soft-sm',
+      success:
+        'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-400 dark:focus:ring-offset-slate-900 shadow-soft-sm',
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-xs',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base',
+      sm: 'px-3 py-1.5 text-xs gap-1.5',
+      md: 'px-4 py-2 text-sm gap-2',
+      lg: 'px-6 py-3 text-base gap-2.5',
+      icon: 'p-2 text-sm',
     };
 
     return (
@@ -34,7 +42,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading && (
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path
               className="opacity-75"
@@ -50,4 +58,3 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
-
