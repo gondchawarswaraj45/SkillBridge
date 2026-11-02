@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, ArrowRight, Menu, X } from 'lucide-react';
+import { Sparkles, ArrowRight, Menu, X, CheckSquare, MessageSquare, Video } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { useApp } from '@/context/AppContext';
@@ -13,11 +13,11 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-surface-border dark:border-slate-800 transition-colors">
+    <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-surface-border dark:border-slate-800 transition-colors shadow-soft-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center text-white font-extrabold text-lg shadow-soft-sm">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center text-white font-extrabold text-lg shadow-soft-sm transform transition-transform group-hover:scale-105 group-active:scale-95">
             SB
           </div>
           <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">
@@ -29,7 +29,7 @@ export const Navbar: React.FC = () => {
         <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
           <Link
             to="/marketplace"
-            className={`transition-colors hover:text-brand-500 ${
+            className={`transition-all hover:text-brand-500 hover:scale-105 ${
               isActive('/marketplace') ? 'text-brand-500 font-bold' : ''
             }`}
           >
@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
           </Link>
           <Link
             to="/client/post-job"
-            className={`transition-colors hover:text-brand-500 ${
+            className={`transition-all hover:text-brand-500 hover:scale-105 ${
               isActive('/client/post-job') ? 'text-brand-500 font-bold' : ''
             }`}
           >
@@ -45,7 +45,7 @@ export const Navbar: React.FC = () => {
           </Link>
           <Link
             to="/ai-suite"
-            className={`flex items-center gap-1.5 transition-colors hover:text-accent-500 ${
+            className={`flex items-center gap-1.5 transition-all hover:text-accent-500 hover:scale-105 ${
               isActive('/ai-suite') ? 'text-accent-500 font-bold' : ''
             }`}
           >
@@ -54,29 +54,33 @@ export const Navbar: React.FC = () => {
           </Link>
           <Link
             to="/workspace/1"
-            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-bold hover:bg-brand-100"
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-bold hover:bg-brand-100 dark:hover:bg-brand-900/60 transition-all hover:scale-105 active:scale-95"
           >
+            <CheckSquare className="w-3.5 h-3.5 text-brand-500" />
             Live Kanban
           </Link>
           <Link
             to="/messages"
-            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-brand-500 transition-colors"
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-brand-500 transition-all hover:scale-105 active:scale-95"
           >
+            <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
             Chat
           </Link>
           <Link
             to="/meetings"
-            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-brand-500 transition-colors"
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-brand-500 transition-all hover:scale-105 active:scale-95"
           >
+            <Video className="w-3.5 h-3.5 text-accent-500" />
             Meet
           </Link>
         </nav>
 
         {/* Right CTA, Role Switcher & Theme Toggle */}
         <div className="flex items-center gap-2.5">
-          {/* Quick Interactive Role Switcher */}
+          {/* Quick Role Switcher */}
           <div className="hidden sm:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold">
             <button
+              type="button"
               onClick={() => switchRole('FREELANCER')}
               className={`px-2 py-1 rounded-lg transition-all ${
                 currentUser.role === 'FREELANCER'
@@ -87,6 +91,7 @@ export const Navbar: React.FC = () => {
               Freelancer
             </button>
             <button
+              type="button"
               onClick={() => switchRole('CLIENT')}
               className={`px-2 py-1 rounded-lg transition-all ${
                 currentUser.role === 'CLIENT'
@@ -97,6 +102,7 @@ export const Navbar: React.FC = () => {
               Client
             </button>
             <button
+              type="button"
               onClick={() => switchRole('ADMIN')}
               className={`px-2 py-1 rounded-lg transition-all ${
                 currentUser.role === 'ADMIN'
@@ -110,9 +116,19 @@ export const Navbar: React.FC = () => {
 
           <ThemeToggle />
 
+          <Link to="/login" className="hidden sm:inline-flex">
+            <Button variant="ghost" size="sm" className="hover:scale-105 active:scale-95 transition-transform">
+              Log In
+            </Button>
+          </Link>
+
           <Link to={`/${currentUser.role.toLowerCase()}/dashboard`}>
-            <Button variant="primary" size="sm" className="gap-1.5 text-xs">
-              Go to Console <ArrowRight className="w-3.5 h-3.5" />
+            <Button
+              variant="primary"
+              size="sm"
+              className="gap-1.5 text-xs shadow-soft-sm hover:scale-105 active:scale-95 transition-transform"
+            >
+              Open Console <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </Link>
 
@@ -129,7 +145,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden px-4 pt-3 pb-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+        <div className="lg:hidden px-4 pt-3 pb-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 animate-fadeIn">
           <Link
             to="/marketplace"
             onClick={() => setMobileMenuOpen(false)}
@@ -143,6 +159,13 @@ export const Navbar: React.FC = () => {
             className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             Post a Project (AI)
+          </Link>
+          <Link
+            to="/ai-suite"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-accent-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            AI Capability Suite
           </Link>
           <Link
             to="/workspace/1"
