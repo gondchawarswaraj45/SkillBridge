@@ -8,10 +8,8 @@ import {
   DollarSign,
   MessageSquare,
   Sparkles,
-  Settings,
   LogOut,
   Menu,
-  Bell,
   Search,
   ShieldAlert,
   Users,
@@ -21,6 +19,7 @@ import {
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { useApp } from '@/context/AppContext';
 import { cn } from '@/utils/cn';
 
 interface SidebarItem {
@@ -31,33 +30,32 @@ interface SidebarItem {
 }
 
 interface DashboardLayoutProps {
-  role: 'freelancer' | 'client' | 'admin';
+  role?: 'freelancer' | 'client' | 'admin';
   userName?: string;
   userEmail?: string;
   children: React.ReactNode;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  role,
-  userName = 'Alex Rivers',
-  userEmail = 'alex@example.com',
-  children,
-}) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { currentUser, switchRole } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+
+  const role = currentUser.role.toLowerCase() as 'freelancer' | 'client' | 'admin';
+  const userName = currentUser.name;
+  const userEmail = currentUser.email;
 
   const freelancerNav: SidebarItem[] = [
     { label: 'Overview', href: '/freelancer/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { label: 'Find Work', href: '/marketplace', icon: <Search className="w-4 h-4" />, badge: 'New' },
     { label: 'My Proposals', href: '/freelancer/proposals', icon: <FileText className="w-4 h-4" /> },
     { label: 'Active Contracts', href: '/freelancer/contracts', icon: <Briefcase className="w-4 h-4" /> },
-    { label: 'Project Workspace', href: '/workspace/1', icon: <FolderGit2 className="w-4 h-4" /> },
+    { label: 'Project Workspace', href: '/workspace/1', icon: <FolderGit2 className="w-4 h-4 text-brand-500" /> },
     { label: 'Messages', href: '/messages', icon: <MessageSquare className="w-4 h-4" />, badge: '3' },
     { label: 'Video Meetings', href: '/meetings', icon: <Video className="w-4 h-4" /> },
     { label: 'Portfolio & Profile', href: '/freelancer/profile', icon: <Award className="w-4 h-4" /> },
     { label: 'Earnings & Payouts', href: '/freelancer/earnings', icon: <DollarSign className="w-4 h-4" /> },
-    { label: 'AI Career Coach', href: '/ai/career-coach', icon: <Sparkles className="w-4 h-4 text-accent-500" /> },
-    { label: 'Settings', href: '/freelancer/settings', icon: <Settings className="w-4 h-4" /> },
+    { label: 'AI Suite', href: '/ai-suite', icon: <Sparkles className="w-4 h-4 text-accent-500" /> },
   ];
 
   const clientNav: SidebarItem[] = [
@@ -66,11 +64,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { label: 'My Postings', href: '/client/projects', icon: <Briefcase className="w-4 h-4" /> },
     { label: 'Discover Talent', href: '/talent', icon: <Users className="w-4 h-4" /> },
     { label: 'Active Contracts', href: '/client/contracts', icon: <FileText className="w-4 h-4" /> },
-    { label: 'Project Workspace', href: '/workspace/1', icon: <FolderGit2 className="w-4 h-4" /> },
+    { label: 'Project Workspace', href: '/workspace/1', icon: <FolderGit2 className="w-4 h-4 text-accent-500" /> },
     { label: 'Messages', href: '/messages', icon: <MessageSquare className="w-4 h-4" /> },
+    { label: 'Video Meetings', href: '/meetings', icon: <Video className="w-4 h-4" /> },
     { label: 'Financials & Escrow', href: '/client/billing', icon: <DollarSign className="w-4 h-4" /> },
-    { label: 'Company Profile', href: '/client/profile', icon: <Award className="w-4 h-4" /> },
-    { label: 'Settings', href: '/client/settings', icon: <Settings className="w-4 h-4" /> },
+    { label: 'AI Suite', href: '/ai-suite', icon: <Sparkles className="w-4 h-4 text-accent-500" /> },
   ];
 
   const adminNav: SidebarItem[] = [
@@ -79,9 +77,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     { label: 'Project Moderation', href: '/admin/projects', icon: <Briefcase className="w-4 h-4" /> },
     { label: 'AI Fraud Detection', href: '/admin/fraud-detection', icon: <ShieldAlert className="w-4 h-4 text-rose-500" />, badge: 'Alert' },
     { label: 'Escrow & Transactions', href: '/admin/transactions', icon: <DollarSign className="w-4 h-4" /> },
-    { label: 'Dispute Arbitration', href: '/admin/disputes', icon: <FileText className="w-4 h-4" /> },
-    { label: 'Platform Analytics', href: '/admin/analytics', icon: <Sparkles className="w-4 h-4" /> },
-    { label: 'System Settings', href: '/admin/settings', icon: <Settings className="w-4 h-4" /> },
+    { label: 'AI Suite', href: '/ai-suite', icon: <Sparkles className="w-4 h-4 text-accent-500" /> },
   ];
 
   const currentNav = role === 'admin' ? adminNav : role === 'client' ? clientNav : freelancerNav;
@@ -144,8 +140,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           })}
         </nav>
 
-        {/* User Card & Logout */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        {/* User Card with Balance & Logout */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Available:</span>
+            <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+              ${currentUser.balance.toLocaleString()}
+            </span>
+          </div>
+
           <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60">
             <Avatar name={userName} size="sm" status="online" />
             <div className="flex-1 min-w-0">
@@ -181,15 +184,49 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Instant Role Switcher */}
+            <div className="hidden sm:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-bold">
+              <button
+                onClick={() => switchRole('FREELANCER')}
+                className={`px-2 py-1 rounded-lg transition-all ${
+                  currentUser.role === 'FREELANCER'
+                    ? 'bg-brand-500 text-white shadow-soft-sm'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Freelancer
+              </button>
+              <button
+                onClick={() => switchRole('CLIENT')}
+                className={`px-2 py-1 rounded-lg transition-all ${
+                  currentUser.role === 'CLIENT'
+                    ? 'bg-accent-500 text-white shadow-soft-sm'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Client
+              </button>
+              <button
+                onClick={() => switchRole('ADMIN')}
+                className={`px-2 py-1 rounded-lg transition-all ${
+                  currentUser.role === 'ADMIN'
+                    ? 'bg-amber-500 text-white shadow-soft-sm'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Admin
+              </button>
+            </div>
+
             <ThemeToggle />
-            <button className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 relative">
-              <Bell className="w-4 h-4" />
+
+            <Link to="/messages" className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 relative">
+              <MessageSquare className="w-4 h-4" />
               <span className="w-2 h-2 rounded-full bg-brand-500 absolute top-2 right-2 ring-2 ring-white dark:ring-slate-900" />
-            </button>
-            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
-            <Link to={`/${role}/profile`} className="flex items-center gap-2">
-              <Avatar name={userName} size="sm" />
             </Link>
+
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
+            <Avatar name={userName} size="sm" />
           </div>
         </header>
 

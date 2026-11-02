@@ -11,105 +11,57 @@ import {
   ChevronRight,
   ShieldCheck,
   Calendar,
-  Paperclip,
+  ArrowRight,
+  ArrowLeft,
+  Trash2,
+  CheckCircle2,
 } from 'lucide-react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { useApp, TaskItem } from '@/context/AppContext';
 import { cn } from '@/utils/cn';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  assignee: string;
-  dueDate: string;
-  milestone: string;
-  commentsCount: number;
-  filesCount: number;
-}
-
-const initialTasks: Record<string, Task[]> = {
-  TODO: [
-    {
-      id: 'TASK-104',
-      title: 'Design Dark Mode Elevation & Shadow Tokens',
-      description: 'Implement dark mode shadow utilities in Tailwind configuration for rich depth.',
-      priority: 'MEDIUM',
-      assignee: 'Aisha Al-Mansoor',
-      dueDate: 'Nov 08',
-      milestone: 'Milestone 2',
-      commentsCount: 2,
-      filesCount: 1,
-    },
-    {
-      id: 'TASK-105',
-      title: 'Setup WebRTC STUN/TURN Peer Connection Server',
-      description: 'Configure real-time peer connection signaling channel for low-latency video calls.',
-      priority: 'HIGH',
-      assignee: 'Swaraj Bhosale',
-      dueDate: 'Nov 12',
-      milestone: 'Milestone 3',
-      commentsCount: 4,
-      filesCount: 0,
-    },
-  ],
-  IN_PROGRESS: [
-    {
-      id: 'TASK-102',
-      title: 'Spring Security 6 Stateless JWT Filter Implementation',
-      description: 'Implement JwtAuthenticationFilter with access and rotating refresh tokens.',
-      priority: 'CRITICAL',
-      assignee: 'Swaraj Bhosale',
-      dueDate: 'Nov 06',
-      milestone: 'Milestone 2',
-      commentsCount: 7,
-      filesCount: 3,
-    },
-  ],
-  IN_REVIEW: [
-    {
-      id: 'TASK-101',
-      title: 'Design System Typography & Primitive Component Set',
-      description: 'Built Button, Card, Badge, Input, and StatCard components with full theme switching.',
-      priority: 'HIGH',
-      assignee: 'Swaraj Bhosale',
-      dueDate: 'Nov 04',
-      milestone: 'Milestone 1',
-      commentsCount: 5,
-      filesCount: 2,
-    },
-  ],
-  COMPLETED: [
-    {
-      id: 'TASK-100',
-      title: 'Monorepo Architecture & Multi-Profile Database Setup',
-      description: 'Scaffolded Spring Boot backend with H2 dev fallback, Flyway, and shared TypeScript models.',
-      priority: 'HIGH',
-      assignee: 'Swaraj Bhosale',
-      dueDate: 'Nov 03',
-      milestone: 'Milestone 1',
-      commentsCount: 3,
-      filesCount: 4,
-    },
-  ],
-};
-
 const columns = [
-  { id: 'TODO', title: 'To Do', color: 'border-t-slate-400' },
-  { id: 'IN_PROGRESS', title: 'In Progress', color: 'border-t-brand-500' },
-  { id: 'IN_REVIEW', title: 'In Review', color: 'border-t-amber-500' },
-  { id: 'COMPLETED', title: 'Completed', color: 'border-t-emerald-500' },
+  { id: 'TODO', title: 'To Do', color: 'border-t-slate-400', next: 'IN_PROGRESS', prev: null },
+  { id: 'IN_PROGRESS', title: 'In Progress', color: 'border-t-brand-500', next: 'IN_REVIEW', prev: 'TODO' },
+  { id: 'IN_REVIEW', title: 'In Review', color: 'border-t-amber-500', next: 'COMPLETED', prev: 'IN_PROGRESS' },
+  { id: 'COMPLETED', title: 'Completed', color: 'border-t-emerald-500', next: null, prev: 'IN_REVIEW' },
 ];
 
 export const ProjectWorkspace: React.FC = () => {
-  const [tasks] = useState(initialTasks);
+  const {
+    tasks,
+    moveTask,
+    addTask,
+    deleteTask,
+    milestones,
+    submitDeliverable,
+    approveMilestone,
+    currentUser,
+  } = useApp();
+
   const [activeTab, setActiveTab] = useState<'kanban' | 'milestones' | 'files' | 'meetings'>('kanban');
 
-  const priorityBadge = (priority: Task['priority']) => {
+  // Task creation modal state
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [taskPriority, setTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>('MEDIUM');
+  const [taskColumn, setTaskColumn] = useState('TODO');
+  const [taskAssignee, setTaskAssignee] = useState('Swaraj Bhosale');
+  const [taskDueDate, setTaskDueDate] = useState('Nov 10');
+
+  // Milestone deliverable modal state
+  const [isDeliverableModalOpen, setIsDeliverableModalOpen] = useState(false);
+  const [deliverableNotes, setDeliverableNotes] = useState('');
+  const [deliverableUrl, setDeliverableUrl] = useState('');
+
+  const priorityBadge = (priority: TaskItem['priority']) => {
     switch (priority) {
       case 'CRITICAL':
         return <Badge variant="danger" size="sm">Critical</Badge>;
@@ -122,8 +74,36 @@ export const ProjectWorkspace: React.FC = () => {
     }
   };
 
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskTitle.trim()) return;
+
+    addTask(taskColumn, {
+      title: taskTitle,
+      description: taskDescription,
+      priority: taskPriority,
+      assignee: taskAssignee,
+      dueDate: taskDueDate,
+      milestone: 'Milestone 2',
+    });
+
+    setTaskTitle('');
+    setTaskDescription('');
+    setIsTaskModalOpen(false);
+  };
+
+  const handleSubmitDeliverable = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitDeliverable(2, deliverableNotes, deliverableUrl);
+    setDeliverableNotes('');
+    setDeliverableUrl('');
+    setIsDeliverableModalOpen(false);
+  };
+
+  const activeMilestone = milestones.find((m) => m.num === 2);
+
   return (
-    <DashboardLayout role="freelancer" userName="Swaraj Bhosale">
+    <DashboardLayout role={currentUser.role.toLowerCase() as any} userName={currentUser.name}>
       {/* Workspace Header */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -133,7 +113,7 @@ export const ProjectWorkspace: React.FC = () => {
               <ChevronRight className="w-3.5 h-3.5" />
               <span>CTR-4029</span>
               <ChevronRight className="w-3.5 h-3.5" />
-              <span className="text-brand-500">Live Workspace</span>
+              <span className="text-brand-500 font-bold">Interactive Workspace</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
               Enterprise Fintech Dashboard & Analytics Platform
@@ -154,7 +134,12 @@ export const ProjectWorkspace: React.FC = () => {
                 <Video className="w-4 h-4 text-accent-500" /> Meet
               </Button>
             </Link>
-            <Button size="sm" variant="primary" className="gap-1.5">
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => setIsTaskModalOpen(true)}
+              className="gap-1.5"
+            >
               <Plus className="w-4 h-4" /> Add Task
             </Button>
           </div>
@@ -163,22 +148,64 @@ export const ProjectWorkspace: React.FC = () => {
         {/* Milestone Escrow Status Banner */}
         <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-brand-500 text-white">
+            <div className="p-2.5 rounded-xl bg-brand-500 text-white shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900 dark:text-white">
-                Milestone 2 of 4: Spring Boot Backend & Security Architecture
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-bold text-slate-900 dark:text-white">
+                  Milestone 2 of 4: Spring Boot Backend & Security Architecture
+                </p>
+                <Badge
+                  variant={
+                    activeMilestone?.status === 'COMPLETED'
+                      ? 'success'
+                      : activeMilestone?.status === 'IN_REVIEW'
+                      ? 'warning'
+                      : 'primary'
+                  }
+                  size="sm"
+                >
+                  {activeMilestone?.status}
+                </Badge>
+              </div>
               <p className="text-xs text-brand-700 dark:text-brand-300 mt-0.5">
                 $1,500.00 USD securely held in Escrow • Deadline: Nov 12, 2026
               </p>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="success" className="text-xs font-bold">
-              Submit Deliverable for Approval
-            </Button>
+            {activeMilestone?.status === 'IN_PROGRESS' && (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => setIsDeliverableModalOpen(true)}
+                className="text-xs font-bold"
+              >
+                Submit Deliverable for Approval
+              </Button>
+            )}
+
+            {activeMilestone?.status === 'IN_REVIEW' && (
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="md">Under Review by Client</Badge>
+                <Button
+                  size="sm"
+                  variant="success"
+                  onClick={() => approveMilestone(2)}
+                  className="text-xs font-bold gap-1"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Approve & Release $1,500
+                </Button>
+              </div>
+            )}
+
+            {activeMilestone?.status === 'COMPLETED' && (
+              <Badge variant="success" size="md" className="gap-1 font-bold">
+                <CheckCircle2 className="w-4 h-4" /> Escrow Funds Released to Freelancer
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -207,7 +234,7 @@ export const ProjectWorkspace: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab 1: Kanban Board */}
+      {/* Tab 1: Dynamic Kanban Board */}
       {activeTab === 'kanban' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
           {columns.map((col) => (
@@ -228,7 +255,13 @@ export const ProjectWorkspace: React.FC = () => {
                     {tasks[col.id]?.length || 0}
                   </span>
                 </div>
-                <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <button
+                  onClick={() => {
+                    setTaskColumn(col.id);
+                    setIsTaskModalOpen(true);
+                  }}
+                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
@@ -239,7 +272,7 @@ export const ProjectWorkspace: React.FC = () => {
                   <Card
                     key={task.id}
                     hoverEffect
-                    className="p-4 bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 space-y-3 cursor-grab"
+                    className="p-4 bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-mono font-bold text-slate-400">
@@ -257,22 +290,43 @@ export const ProjectWorkspace: React.FC = () => {
                     </p>
 
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-400">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 font-semibold text-slate-600 dark:text-slate-300">
-                          <Calendar className="w-3 h-3 text-slate-400" /> {task.dueDate}
-                        </span>
-                        {task.filesCount > 0 && (
-                          <span className="flex items-center gap-0.5">
-                            <Paperclip className="w-3 h-3" /> {task.filesCount}
-                          </span>
-                        )}
-                        {task.commentsCount > 0 && (
-                          <span className="flex items-center gap-0.5">
-                            <MessageSquare className="w-3 h-3" /> {task.commentsCount}
-                          </span>
-                        )}
-                      </div>
+                      <span className="flex items-center gap-1 font-semibold text-slate-600 dark:text-slate-300">
+                        <Calendar className="w-3 h-3 text-slate-400" /> {task.dueDate}
+                      </span>
                       <Avatar name={task.assignee} size="sm" />
+                    </div>
+
+                    {/* Interactive Task Action Buttons */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                      {col.prev ? (
+                        <button
+                          onClick={() => moveTask(task.id, col.prev!)}
+                          className="p-1 text-[11px] font-semibold text-slate-500 hover:text-brand-500 flex items-center gap-0.5"
+                          title="Move left"
+                        >
+                          <ArrowLeft className="w-3 h-3" /> Back
+                        </button>
+                      ) : (
+                        <div />
+                      )}
+
+                      <button
+                        onClick={() => deleteTask(col.id, task.id)}
+                        className="p-1 text-slate-400 hover:text-rose-500"
+                        title="Delete task"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      {col.next && (
+                        <button
+                          onClick={() => moveTask(task.id, col.next!)}
+                          className="p-1 text-[11px] font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-0.5"
+                          title="Move right"
+                        >
+                          Next <ArrowRight className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   </Card>
                 ))}
@@ -282,49 +336,31 @@ export const ProjectWorkspace: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 2: Milestones & Payments */}
+      {/* Tab 2: Dynamic Milestones */}
       {activeTab === 'milestones' && (
         <Card className="p-6 space-y-6">
-          <div>
-            <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
-              Contract Milestones & Escrow Ledger
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Contract Total: $6,000.00 USD • $1,500.00 Released • $1,500.00 In Escrow • $3,000.00 Remaining
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
+                Contract Milestones & Escrow Ledger
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Contract Total: $6,000.00 USD • Available Escrow Protection Active
+              </p>
+            </div>
+            {activeMilestone?.status === 'IN_REVIEW' && (
+              <Button
+                variant="success"
+                onClick={() => approveMilestone(2)}
+                className="gap-2 text-xs font-bold"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Approve Milestone 2 ($1,500)
+              </Button>
+            )}
           </div>
 
           <div className="space-y-4">
-            {[
-              {
-                num: 1,
-                title: 'System Architecture Blueprint & Monorepo Setup',
-                amount: '$1,500.00',
-                status: 'APPROVED & RELEASED',
-                date: 'Completed Nov 01, 2026',
-              },
-              {
-                num: 2,
-                title: 'Spring Boot REST APIs, JWT Auth & Database Schema',
-                amount: '$1,500.00',
-                status: 'FUNDS IN ESCROW',
-                date: 'Due Nov 12, 2026',
-              },
-              {
-                num: 3,
-                title: 'React Frontend Implementation & Real-Time WebSockets',
-                amount: '$1,500.00',
-                status: 'UPCOMING',
-                date: 'Due Nov 22, 2026',
-              },
-              {
-                num: 4,
-                title: 'AI Talent Matching Engine & Production Deployment',
-                amount: '$1,500.00',
-                status: 'UPCOMING',
-                date: 'Due Dec 05, 2026',
-              },
-            ].map((m) => (
+            {milestones.map((m) => (
               <div
                 key={m.num}
                 className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -336,9 +372,11 @@ export const ProjectWorkspace: React.FC = () => {
                     </span>
                     <Badge
                       variant={
-                        m.status.includes('APPROVED')
+                        m.status === 'COMPLETED'
                           ? 'success'
-                          : m.status.includes('ESCROW')
+                          : m.status === 'IN_REVIEW'
+                          ? 'warning'
+                          : m.status === 'IN_PROGRESS'
                           ? 'primary'
                           : 'neutral'
                       }
@@ -348,13 +386,22 @@ export const ProjectWorkspace: React.FC = () => {
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">{m.date}</p>
+                  {m.deliverableNotes && (
+                    <p className="text-xs font-mono text-emerald-600 dark:text-emerald-400 mt-2 bg-emerald-50 dark:bg-emerald-950/60 p-2 rounded-lg">
+                      Notes: {m.deliverableNotes}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-lg font-extrabold text-slate-900 dark:text-white">
-                    {m.amount}
+                    ${m.amount.toLocaleString()}.00
                   </span>
-                  {m.status.includes('ESCROW') && (
-                    <Button size="sm" variant="primary">
+                  {m.status === 'IN_PROGRESS' && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setIsDeliverableModalOpen(true)}
+                    >
                       Submit Work
                     </Button>
                   )}
@@ -365,7 +412,7 @@ export const ProjectWorkspace: React.FC = () => {
         </Card>
       )}
 
-      {/* Tab 3 & 4: Quick Preview */}
+      {/* Tab 3 & 4 */}
       {(activeTab === 'files' || activeTab === 'meetings') && (
         <Card className="p-12 text-center space-y-3">
           <FolderGit2 className="w-10 h-10 text-brand-500 mx-auto" />
@@ -377,11 +424,141 @@ export const ProjectWorkspace: React.FC = () => {
               ? 'Shared deliverables, design specifications, and code attachments are encrypted and preserved here.'
               : 'Launch end-to-end video meetings with AI automated transcript minutes generation.'}
           </p>
-          <Button size="sm" variant="primary">
-            {activeTab === 'files' ? 'Upload Asset' : 'Schedule Meeting'}
-          </Button>
+          <Link to={activeTab === 'files' ? '#' : '/meetings'}>
+            <Button size="sm" variant="primary">
+              {activeTab === 'files' ? 'Upload Asset' : 'Join Video Room Now'}
+            </Button>
+          </Link>
         </Card>
       )}
+
+      {/* MODAL 1: Add Task Modal */}
+      <Modal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        title="Create New Project Task"
+        description="Add a task card to your live Kanban workspace board"
+      >
+        <form onSubmit={handleCreateTask} className="space-y-4">
+          <Input
+            label="Task Title"
+            placeholder="e.g. Implement WebSocket Reconnection Logic"
+            value={taskTitle}
+            onChange={(e) => setTaskTitle(e.target.value)}
+            required
+          />
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Description
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Describe acceptance criteria and deliverables..."
+              value={taskDescription}
+              onChange={(e) => setTaskDescription(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Column
+              </label>
+              <select
+                value={taskColumn}
+                onChange={(e) => setTaskColumn(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Priority
+              </label>
+              <select
+                value={taskPriority}
+                onChange={(e) => setTaskPriority(e.target.value as any)}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Assignee"
+              value={taskAssignee}
+              onChange={(e) => setTaskAssignee(e.target.value)}
+            />
+            <Input
+              label="Due Date"
+              value={taskDueDate}
+              onChange={(e) => setTaskDueDate(e.target.value)}
+            />
+          </div>
+
+          <div className="pt-4 flex items-center justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => setIsTaskModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary">
+              Create Task
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL 2: Submit Deliverable Modal */}
+      <Modal
+        isOpen={isDeliverableModalOpen}
+        onClose={() => setIsDeliverableModalOpen(false)}
+        title="Submit Milestone 2 Deliverable"
+        description="Notify the client for review to trigger escrow release"
+      >
+        <form onSubmit={handleSubmitDeliverable} className="space-y-4">
+          <Input
+            label="Live Demo / GitHub PR URL"
+            placeholder="https://github.com/organization/repo/pull/12"
+            value={deliverableUrl}
+            onChange={(e) => setDeliverableUrl(e.target.value)}
+            required
+          />
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Deliverable Notes & Summary
+            </label>
+            <textarea
+              rows={4}
+              placeholder="Detail what was built, testing verification instructions, and API endpoints..."
+              value={deliverableNotes}
+              onChange={(e) => setDeliverableNotes(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              required
+            />
+          </div>
+
+          <div className="pt-4 flex items-center justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => setIsDeliverableModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="success">
+              Submit for $1,500 Escrow Review
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </DashboardLayout>
   );
 };

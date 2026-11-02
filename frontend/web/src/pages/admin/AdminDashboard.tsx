@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ShieldAlert,
@@ -7,8 +7,10 @@ import {
   DollarSign,
   TrendingUp,
   CheckCircle2,
-  ArrowRight,
   Eye,
+  Check,
+  X,
+  AlertTriangle,
 } from 'lucide-react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StatCard } from '@/components/ui/StatCard';
@@ -16,57 +18,20 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
-
-const flaggedAccounts = [
-  {
-    id: 'USR-8941',
-    user: 'CrypticSolutions Ltd',
-    role: 'Client',
-    riskLevel: 'HIGH',
-    reason: 'Suspicious Off-Platform Payment Solicitation in Messages',
-    aiConfidence: '96% confidence',
-    date: '10 mins ago',
-  },
-  {
-    id: 'USR-8930',
-    user: 'DevMaster99',
-    role: 'Freelancer',
-    riskLevel: 'MEDIUM',
-    reason: 'Duplicate Portfolio Code Repositories Across Multiple Accounts',
-    aiConfidence: '88% confidence',
-    date: '35 mins ago',
-  },
-  {
-    id: 'USR-8912',
-    user: 'UltraVentures Inc',
-    role: 'Client',
-    riskLevel: 'LOW',
-    reason: 'Abnormally High Budget Discrepancy ($250k for basic HTML script)',
-    aiConfidence: '82% confidence',
-    date: '2 hours ago',
-  },
-];
-
-const pendingVerifications = [
-  {
-    id: 1,
-    name: 'Rohit Kulkarni',
-    role: 'Freelancer',
-    specialty: 'Senior Backend Architect',
-    idStatus: 'Government ID & LinkedIn Uploaded',
-    date: 'Nov 02, 2026',
-  },
-  {
-    id: 2,
-    name: 'Symphony Software Group',
-    role: 'Client (Enterprise)',
-    specialty: 'Fintech Products',
-    idStatus: 'Corporate Tax ID & Certificate of Incorporation',
-    date: 'Nov 02, 2026',
-  },
-];
+import { Modal } from '@/components/ui/Modal';
+import { useApp } from '@/context/AppContext';
 
 export const AdminDashboard: React.FC = () => {
+  const {
+    flaggedAccounts,
+    suspendAccount,
+    pendingVerifications,
+    approveVerification,
+    rejectVerification,
+  } = useApp();
+
+  const [inspectedAccount, setInspectedAccount] = useState<any | null>(null);
+
   return (
     <DashboardLayout role="admin" userName="Super Admin" userEmail="security@skillbridge.dev">
       {/* Admin Alert Header */}
@@ -79,19 +44,22 @@ export const AdminDashboard: React.FC = () => {
             SkillBridge Platform Governance Console
           </h1>
           <p className="text-slate-400 text-sm mt-1 max-w-xl">
-            System status is healthy. <span className="text-white font-bold">3 flagged anomalies</span>{' '}
+            System status is healthy. <span className="text-white font-bold">{flaggedAccounts.filter(a => a.status !== 'SUSPENDED').length} flagged anomalies</span>{' '}
             require manual moderator review today.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/admin/fraud-detection">
-            <Button size="md" variant="danger" className="gap-2 font-bold">
-              Review AI Alerts (3)
-            </Button>
-          </Link>
-          <Link to="/admin/analytics">
+          <Button
+            size="md"
+            variant="danger"
+            onClick={() => setInspectedAccount(flaggedAccounts[0])}
+            className="gap-2 font-bold"
+          >
+            Inspect Top Alert
+          </Button>
+          <Link to="/marketplace">
             <Button size="md" variant="outline" className="border-slate-700 text-slate-200 hover:bg-slate-800">
-              Platform Metrics
+              View Marketplace Feed
             </Button>
           </Link>
         </div>
@@ -144,11 +112,6 @@ export const AdminDashboard: React.FC = () => {
               solicitations
             </p>
           </div>
-          <Link to="/admin/fraud-detection">
-            <Button variant="ghost" size="sm" className="font-bold text-rose-500">
-              Audit Center <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
         </div>
 
         <Card className="p-0 overflow-hidden">
@@ -158,9 +121,10 @@ export const AdminDashboard: React.FC = () => {
                 <tr>
                   <th className="px-6 py-4">Account ID</th>
                   <th className="px-6 py-4">Entity</th>
+                  <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Risk Severity</th>
                   <th className="px-6 py-4">Detected Anomaly</th>
-                  <th className="px-6 py-4">Confidence</th>
+                  <th className="px-6 py-4">AI Confidence</th>
                   <th className="px-6 py-4 text-right">Moderator Action</th>
                 </tr>
               </thead>
@@ -173,6 +137,14 @@ export const AdminDashboard: React.FC = () => {
                     <td className="px-6 py-4">
                       <p className="font-bold text-slate-900 dark:text-white">{account.user}</p>
                       <span className="text-[11px] text-slate-400">Role: {account.role}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge
+                        variant={account.status === 'SUSPENDED' ? 'danger' : 'neutral'}
+                        size="sm"
+                      >
+                        {account.status}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4">
                       <Badge
@@ -189,12 +161,26 @@ export const AdminDashboard: React.FC = () => {
                       {account.aiConfidence}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <Button size="sm" variant="outline" className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setInspectedAccount(account)}
+                        className="text-xs"
+                      >
                         <Eye className="w-3.5 h-3.5 mr-1" /> Inspect
                       </Button>
-                      <Button size="sm" variant="danger" className="text-xs">
-                        Suspend
-                      </Button>
+                      {account.status !== 'SUSPENDED' ? (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => suspendAccount(account.id)}
+                          className="text-xs"
+                        >
+                          Suspend
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-rose-500 font-bold">Suspended ✓</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -212,47 +198,111 @@ export const AdminDashboard: React.FC = () => {
               Pending Identity & Enterprise Verifications
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Users awaiting verified checkmark badges for high-volume transactions
+              Users awaiting verified checkmark badges ({pendingVerifications.length} pending)
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {pendingVerifications.map((item) => (
-            <Card key={item.id} className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar name={item.name} size="md" />
-                    <div>
-                      <h4 className="font-extrabold text-slate-900 dark:text-white">{item.name}</h4>
-                      <Badge variant="primary" size="sm" className="mt-1">
-                        {item.role}
-                      </Badge>
+        {pendingVerifications.length === 0 ? (
+          <Card className="p-8 text-center">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+            <p className="font-bold text-slate-900 dark:text-white">All Verifications Processed</p>
+            <p className="text-xs text-slate-400">No pending identity audits in the queue.</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {pendingVerifications.map((item) => (
+              <Card key={item.id} className="p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={item.name} size="md" />
+                      <div>
+                        <h4 className="font-extrabold text-slate-900 dark:text-white">{item.name}</h4>
+                        <Badge variant="primary" size="sm" className="mt-1">
+                          {item.role}
+                        </Badge>
+                      </div>
                     </div>
+                    <span className="text-xs text-slate-400">{item.date}</span>
                   </div>
-                  <span className="text-xs text-slate-400">{item.date}</span>
+                  <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">
+                      Category: {item.specialty}
+                    </p>
+                    <p className="text-slate-500 dark:text-slate-400">Docs: {item.idStatus}</p>
+                  </div>
                 </div>
-                <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
-                  <p className="font-semibold text-slate-700 dark:text-slate-200">
-                    Category: {item.specialty}
-                  </p>
-                  <p className="text-slate-500 dark:text-slate-400">Docs: {item.idStatus}</p>
-                </div>
-              </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-                <Button size="sm" variant="outline">
-                  Reject
-                </Button>
-                <Button size="sm" variant="success" className="gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" /> Approve Badge
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+                  <Button size="sm" variant="outline" onClick={() => rejectVerification(item.id)}>
+                    <X className="w-3.5 h-3.5 mr-1" /> Reject
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="success"
+                    onClick={() => approveVerification(item.id)}
+                    className="gap-1.5"
+                  >
+                    <Check className="w-4 h-4" /> Approve Badge
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* MODAL: Inspect Anomaly Modal */}
+      {inspectedAccount && (
+        <Modal
+          isOpen={!!inspectedAccount}
+          onClose={() => setInspectedAccount(null)}
+          title={`Security Audit: ${inspectedAccount.id}`}
+          description={`Entity: ${inspectedAccount.user} (${inspectedAccount.role})`}
+        >
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 space-y-1">
+              <p className="text-xs font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-600" /> Primary AI Anomaly Flag
+              </p>
+              <p className="text-xs font-medium">{inspectedAccount.reason}</p>
+            </div>
+
+            <div className="text-xs space-y-2 text-slate-600 dark:text-slate-300">
+              <p>
+                <span className="font-bold text-slate-800 dark:text-slate-100">AI Confidence:</span>{' '}
+                {inspectedAccount.aiConfidence}
+              </p>
+              <p>
+                <span className="font-bold text-slate-800 dark:text-slate-100">IP Geolocation:</span>{' '}
+                Flagged proxy mismatch (Reported: London, UK; Socket IP: 185.220.101.4)
+              </p>
+              <p>
+                <span className="font-bold text-slate-800 dark:text-slate-100">Recommended Action:</span>{' '}
+                Freeze escrow payouts until identity verification is approved by senior compliance officer.
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setInspectedAccount(null)}>
+                Close Audit
+              </Button>
+              {inspectedAccount.status !== 'SUSPENDED' && (
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    suspendAccount(inspectedAccount.id);
+                    setInspectedAccount(null);
+                  }}
+                >
+                  Confirm Immediate Suspension
+                </Button>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
     </DashboardLayout>
   );
 };
