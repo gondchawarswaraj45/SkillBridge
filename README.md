@@ -5,6 +5,20 @@
 ### **Next-Generation AI-Powered Freelancing & Talent Marketplace**
 *"Where Talent Meets Opportunity."*
 
+> ⚠️ **Status Notice: Active Development & Production Phase**  
+> *SkillBridge is currently in active development and phased production deployment. Features, screens, and workflows are being continuously tested, updated, and optimized.*
+
+---
+
+### 👥 Project Team & Group Members
+
+| Name | Role | Responsibilities |
+| :--- | :--- | :--- |
+| **Swaraj Gondchawar** | Lead Full Stack Engineer | Architecture, System Design & Core Implementation |
+| **Mayur Shinde** | Frontend Engineer | UI/UX Design, Components & Responsive Flows |
+| **Swaraj Bidkar** | Full Stack Engineer | Authentication, Security, RBAC & State Management |
+| **Parth Waghire** | Backend & QA Engineer | Data Schemas, APIs, Admin Features & Quality Assurance |
+
 [![Java 17](https://img.shields.io/badge/Java-17%20LTS-007396?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
@@ -102,6 +116,64 @@ graph TD
     SVC --> REPO
     REPO --> DB
     SVC --> STORAGE
+```
+
+---
+
+## 📸 Interface Screenshots & UI Previews
+
+> *Note: These UI snapshots reflect the current design implementation. The platform is currently in active development and phased production rollout.*
+
+### 🖥️ 1. Homepage & Navigation
+```text
++---------------------------------------------------------------------------------------+
+|  [⚡ SkillBridge]       Home   About Us   FAQ      [Login]  [✨ Sign Up]  [🛡️ Admin Login]|
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|   Connect Talent with Opportunity                     [ Collaboration Image ]         |
+|   Find world-class freelancers and top projects.                                      |
+|                                                                                       |
+|   [ Get Started -> ]   [ Find Talent ]                                                |
+|                                                                                       |
+|   ---------------------------------------------------------------------------------   |
+|     10,000+ Freelancers      |      5,000+ Projects      |     98% Satisfaction       |
++---------------------------------------------------------------------------------------+
+|   Why Choose SkillBridge?                                                             |
+|   [ 🛡️ Verified Talent ]  [ ⚡ Fast Matching ]  [ 💳 Secure Escrow ]  [ ⭐ Quality ]    |
++---------------------------------------------------------------------------------------+
+```
+
+### 👥 2. Two-Step Account Creation (`/signup`)
+```text
++---------------------------------------------------------------------------------------+
+|  [<- Back]                                                                            |
+|                                   Join SkillBridge                                    |
+|                                 Step 1 of 2: Choose Role                              |
+|                                                                                       |
+|            +----------------------------+   +----------------------------+            |
+|            |      💼 I'm a Freelancer   |   |       🏢 I'm a Client      |            |
+|            |  Find projects & get hired |   |   Hire talented specialists|            |
+|            +----------------------------+   +----------------------------+            |
+|                                                                                       |
+|                                    [ Continue -> ]                                    |
++---------------------------------------------------------------------------------------+
+```
+
+### 🛡️ 3. Admin Console (`/admin/dashboard`)
+```text
++------------------+--------------------------------------------------------------------+
+| [⚡ SkillBridge] |  [<- Back]                                                         |
+| Admin Panel      |  Dashboard Overview                                                |
+| ---------------- |                                                                    |
+| [📊 Dashboard]   |  +--------------+ +--------------+ +--------------+ +------------+ |
+| [👥 Manage Users]|  | Total Users  | | Freelancers  | | Clients      | | Active Jobs| |
+| [💼 Manage Jobs] |  |     3        | |      2       | |     1        | |     3      | |
+| [⚙️ Settings]    |  +--------------+ +--------------+ +--------------+ +------------+ |
+|                  |                                                                    |
+| ---------------- |  Recent Users Table                   Recent Job Postings Table    |
+| [🚪 Logout]      |  Alice Johnson (Freelancer)           React E-Commerce Web App     |
+|                  |  Bob Smith (Client)                   Mobile UI/UX Design          |
++------------------+--------------------------------------------------------------------+
 ```
 
 ---
@@ -455,12 +527,15 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ---
 
-## 👨‍💻 Author & Maintainer
+## 👥 Project Team & Contributors
 
-**Swaraj Bhosale**  
-*Computer Engineering / Full Stack Developer*  
-- **GitHub:** [@gondchawarswaraj45](https://github.com/gondchawarswaraj45) / [@swarajbhosale1](https://github.com/swarajbhosale1)
-- **Project:** SkillBridge — Final Year Capstone & Portfolio System
+* **Swaraj Gondchawar** — Lead Full Stack Engineering & System Architecture
+* **Mayur Shinde** — Frontend Engineering & UI/UX Development
+* **Swaraj Bidkar** — Authentication, Role-Based Access & State Management
+* **Parth Waghire** — Admin Portal, Database Schemas & Quality Assurance
+
+- **GitHub Repository:** [@gondchawarswaraj45/SkillBridge](https://github.com/gondchawarswaraj45/SkillBridge)
+- **Project:** SkillBridge — Final Year Capstone & Production Portfolio System
 
 <div align="center">
   <sub>SkillBridge is built with ❤️ for talent and clients worldwide.</sub>
